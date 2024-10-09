@@ -7,6 +7,7 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.bank.enums.BankLocation;
 import net.runelite.client.plugins.microbot.util.camera.Rs2Camera;
 import net.runelite.client.plugins.microbot.util.menu.NewMenuEntry;
 import net.runelite.client.plugins.microbot.util.misc.Rs2UiHelper;
@@ -433,7 +434,7 @@ public class Rs2GameObject {
         return null;
     }
 
-    public static GameObject findObject(String objectName, boolean exact, int distance, boolean hasLineOfSight, WorldPoint anchorPoint) {
+    public static GameObject findObject(String objectName, boolean exact, int distance, boolean checkLineOfSight, WorldPoint anchorPoint) {
         List<GameObject> gameObjects = getGameObjectsWithinDistance(distance, anchorPoint);
 
         if (gameObjects == null) {
@@ -444,7 +445,7 @@ public class Rs2GameObject {
             if (!Rs2Tile.areSurroundingTilesWalkable(gameObject.getWorldLocation(), gameObject.sizeX(), gameObject.sizeY()))
                 continue;
 
-            if (hasLineOfSight && !hasLineOfSight(gameObject))
+            if (checkLineOfSight && !hasLineOfSight(gameObject))
                 continue;
 
             ObjectComposition objComp = convertGameObjectToObjectComposition(gameObject);
@@ -455,7 +456,7 @@ public class Rs2GameObject {
             String compName;
 
             try {
-                compName = !objComp.getName().equals("null") ? objComp.getName() : (objComp.getImpostor() != null ? objComp.getImpostor().getName() : null);
+                compName = objComp.getName() != null && !objComp.getName().equals("null") ? objComp.getName() : (objComp.getImpostor() != null ? objComp.getImpostor().getName() : null);
             } catch (Exception e) {
                 continue;
             }
@@ -540,6 +541,10 @@ public class Rs2GameObject {
 
         for (GameObject gameObject : gameObjects) {
             if (possibleBankIds.stream().noneMatch(x -> x == gameObject.getId())) continue;
+
+            if (gameObject.getWorldLocation().equals(new WorldPoint(3147, 3449, 0)) || gameObject.getWorldLocation().equals(new WorldPoint(3148, 3449, 0))) {
+                if (!BankLocation.COOKS_GUILD.hasRequirements()) continue;
+            }
 
             ObjectComposition objectComposition = convertGameObjectToObjectComposition(gameObject);
 
@@ -630,26 +635,23 @@ public class Rs2GameObject {
     }
 
     public static TileObject findObject(List<Integer> ids) {
-        int distance = 17; // render distance seems to be around 17
         for (int id : ids) {
             TileObject object = findObjectById(id);
             if (object == null) continue;
-            if (Rs2Player.getWorldLocation().distanceTo(object.getWorldLocation()) < distance) {
-                if (Rs2Player.getWorldLocation().getPlane() != object.getPlane()) continue;
-                if (object instanceof GroundObject && !Rs2Walker.canReach(object.getWorldLocation()))
+            if (Rs2Player.getWorldLocation().getPlane() != object.getPlane()) continue;
+            if (object instanceof GroundObject && !Rs2Walker.canReach(object.getWorldLocation()))
+                continue;
+
+            //exceptions if the pathsize needs to be bigger
+            if (object.getId() == ObjectID.MARKET_STALL_14936) {
+                if (object instanceof GameObject && !Rs2Walker.canReach(object.getWorldLocation(), ((GameObject) object).sizeX(), ((GameObject) object).sizeY(), 4, 4))
                     continue;
-
-                //exceptions if the pathsize needs to be bigger
-                if (object.getId() == ObjectID.MARKET_STALL_14936) {
-                    if (object instanceof GameObject && !Rs2Walker.canReach(object.getWorldLocation(), ((GameObject) object).sizeX(), ((GameObject) object).sizeY(), 4, 4))
-                        continue;
-                } else {
-                    if (object instanceof GameObject && !Rs2Walker.canReach(object.getWorldLocation(), ((GameObject) object).sizeX(), ((GameObject) object).sizeY()))
-                        continue;
-                }
-
-                return object;
+            } else {
+                if (object instanceof GameObject && !Rs2Walker.canReach(object.getWorldLocation(), ((GameObject) object).sizeX(), ((GameObject) object).sizeY()))
+                    continue;
             }
+
+            return object;
         }
         return null;
     }
@@ -670,8 +672,6 @@ public class Rs2GameObject {
     }
 
     public static ObjectComposition convertGameObjectToObjectComposition(TileObject tileObject) {
-        Player player = Microbot.getClient().getLocalPlayer();
-        if (player.getLocalLocation().distanceTo(tileObject.getLocalLocation()) > 4800) return null;
         return Microbot.getClientThread().runOnClientThread(() -> Microbot.getClient().getObjectDefinition(tileObject.getId()));
     }
 
@@ -788,7 +788,6 @@ public class Rs2GameObject {
      * TODO remove this method, maybe use find or get(int id)
      *
      * @param id
-     *
      * @return
      */
     public static List<GameObject> getGameObjects(int id) {
@@ -875,13 +874,13 @@ public class Rs2GameObject {
     }
 
     public static List<GameObject> getGameObjects() {
-        Scene scene = Microbot.getClient().getScene();
-        Tile[][][] tiles = scene.getTiles();
+        Scene scene = Microbot.getClient().getTopLevelWorldView().getScene();
+        Tile[][][] tiles = scene.getExtendedTiles();
 
         int z = Microbot.getClient().getPlane();
         List<GameObject> tileObjects = new ArrayList<>();
-        for (int x = 0; x < Constants.SCENE_SIZE; ++x) {
-            for (int y = 0; y < Constants.SCENE_SIZE; ++y) {
+        for (int x = 0; x < Constants.EXTENDED_SCENE_SIZE; ++x) {
+            for (int y = 0; y < Constants.EXTENDED_SCENE_SIZE; ++y) {
                 Tile tile = tiles[z][x][y];
 
                 if (tile == null) {
@@ -1060,10 +1059,12 @@ public class Rs2GameObject {
 
     private static boolean clickObject(TileObject object, String action) {
         if (object == null) return false;
-        if (Microbot.getClient().getLocalPlayer().getWorldLocation().distanceTo2D(object.getWorldLocation()) > 30) {
+        if (Microbot.getClient().getLocalPlayer().getWorldLocation().distanceTo(object.getWorldLocation()) > 51) {
+            Microbot.log("Walking to the object...");
             Rs2Walker.walkTo(object.getWorldLocation());
             return false;
         }
+
 
         try {
 
@@ -1143,7 +1144,7 @@ public class Rs2GameObject {
             //Rs2Reflection.invokeMenu(param0, param1, menuAction.getId(), object.getId(),-1, "", "", -1, -1);
 
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+            Microbot.log("Failed to interact with object " + ex.getMessage());
         }
 
         return true;
@@ -1238,7 +1239,6 @@ public class Rs2GameObject {
      * Hovers over the given game object using the natural mouse.
      *
      * @param object The game object to hover over.
-     *
      * @return True if successfully hovered, otherwise false.
      */
     public static boolean hoverOverObject(TileObject object) {
