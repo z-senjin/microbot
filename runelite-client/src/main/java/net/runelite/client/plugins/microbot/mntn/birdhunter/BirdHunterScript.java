@@ -98,10 +98,11 @@ public class BirdHunterScript extends Script {
                             break;
                         }
 
-                        if (Rs2GroundItem.exists(BIRD_SNARE, 20)) {
-                            pickUpBirdSnare(config);
-                            break;
-                        }
+                        //TODO: FIX
+//                        if (Rs2GroundItem.exists(BIRD_SNARE, 20)) {
+//                            pickUpBirdSnare(config);
+//                            break;
+//                        }
 
 
                         List<GameObject> successfulBirdSnares = Rs2GameObject.getGameObjects(SUCCESSFUL_TRAP);
@@ -259,12 +260,12 @@ public class BirdHunterScript extends Script {
     }
 
     public void pickUpBirdSnare(BirdHunterConfig config) {
-        if (!Rs2GroundItem.exists(BIRD_SNARE, 20)) {
-            return;
-        }
-        handleInventory(config);
-
-        Rs2GroundItem.loot(BIRD_SNARE);
+//        if (!Rs2GroundItem.exists(BIRD_SNARE, 20)) {
+//            return;
+//        }
+//        handleInventory(config);
+//
+//        Rs2GroundItem.loot(BIRD_SNARE);
     }
 
     public boolean isObjectOnTile(WorldPoint point) {
