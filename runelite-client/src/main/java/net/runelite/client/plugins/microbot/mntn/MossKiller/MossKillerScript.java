@@ -88,6 +88,7 @@ public class MossKillerScript extends Script {
                 if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
 
+
                 if(!isStarted){
                     init();
                 }
@@ -130,7 +131,7 @@ public class MossKillerScript extends Script {
 
         WorldPoint playerLocation = Rs2Player.getWorldLocation();
 
-        if (!Rs2Inventory.contains(FOOD)) {
+        if (!Rs2Inventory.contains(FOOD) || BreakHandlerScript.breakIn <= 15){
             state = MossKillerState.TELEPORT;
             return;
         }
@@ -330,66 +331,60 @@ public class MossKillerScript extends Script {
     }
 
 
-    public void handleBanking(){
-        if(Rs2Bank.openBank()) {
-            sleepUntil(() -> Rs2Bank.isOpen());
-            sleep(400, 900);
-            Rs2Bank.depositAll();
-            sleepUntil(() -> Rs2Inventory.isEmpty());
-            sleep(1000, 1500);
-            if(!Rs2Bank.hasItem(AIR_RUNE) || !Rs2Bank.hasItem(LAW_RUNE) || !Rs2Bank.hasItem(FIRE_RUNE) || !Rs2Bank.hasItem(FOOD)){
-                state = MossKillerState.EXIT_SCRIPT;
-                return;
-            }
-            int keyTotal = Rs2Bank.count("Mossy key");
-            Microbot.log("Key Total: " + keyTotal);
-            if (keyTotal >= config.keyThreshold()){
-                Microbot.log("keyTotal >= config threshold");
-                bossMode = true;
-                Rs2Bank.withdrawItem(MOSSY_KEY);
-               // Rs2Bank.withdrawOne(MOSSY_KEY);
-                Microbot.log("Sleeping until mossy key");
-                sleepUntil(() -> Rs2Inventory.contains(MOSSY_KEY));
-                sleep(1000, 1300);
-                Rs2Bank.withdrawOne(BRONZE_AXE);
-                sleepUntil(() -> Rs2Inventory.contains(BRONZE_AXE));
-                sleep(200, 600);
-            } else if(bossMode && keyTotal > 0) {
-                Microbot.log("bossMode and keyTotal > 0");
-                Rs2Bank.withdrawOne(MOSSY_KEY);
-                sleepUntil(() -> Rs2Inventory.contains(MOSSY_KEY));
-                sleep(1000, 1300);
-                Rs2Bank.withdrawOne(BRONZE_AXE);
-                sleepUntil(() -> Rs2Inventory.contains(BRONZE_AXE));
-                sleep(200, 600);
-            } else if(keyTotal == 0){
-                Microbot.log("keyTotal == 0");
-                bossMode = false;
-            }
-            Rs2Bank.withdrawAll(AIR_RUNE);
-            sleepUntil(() -> Rs2Inventory.contains(AIR_RUNE));
-            sleep(500, 1000);
-            Rs2Bank.withdrawAll(FIRE_RUNE);
-            sleepUntil(() -> Rs2Inventory.contains(FIRE_RUNE));
-            sleep(500, 1000);
-            Rs2Bank.withdrawAll(LAW_RUNE);
-            sleepUntil(() -> Rs2Inventory.contains(LAW_RUNE));
-            sleep(500, 1000);
+   public void handleBanking() {
+    if (Rs2Bank.openBank()) {
+        sleepUntil(Rs2Bank::isOpen, 3000);
+        sleep(400, 900);
+        Rs2Bank.depositAll();
+        sleepUntil(Rs2Inventory::isEmpty, 3000);
+        sleep(1000, 1500);
 
-            Rs2Bank.withdrawAll(FOOD);
-            sleepUntil(() -> Rs2Inventory.contains(FOOD));
-            sleep(500, 1000);
-            if (Rs2Inventory.containsAll(new int[]{AIR_RUNE, FIRE_RUNE, LAW_RUNE, FOOD})) {
-                if(Rs2Bank.closeBank()){
-
-                    state = MossKillerState.WALK_TO_MOSS_GIANTS;
-                }
-            }
-
-
+        if (!Rs2Bank.hasItem(AIR_RUNE) || !Rs2Bank.hasItem(LAW_RUNE) 
+            || !Rs2Bank.hasItem(FIRE_RUNE) || !Rs2Bank.hasItem(FOOD)) {
+            state = MossKillerState.EXIT_SCRIPT;
+            return;
         }
-        sleep(500, 1000);
+
+        int keyTotal = Rs2Bank.count("Mossy key");
+        Microbot.log("Key Total: " + keyTotal);
+
+        if (keyTotal >= config.keyThreshold()) {
+            Microbot.log("keyTotal >= config threshold");
+            bossMode = true;
+            Rs2Bank.withdrawOne(MOSSY_KEY);
+            sleep(500, 1200);
+            Rs2Bank.withdrawOne(BRONZE_AXE);
+            sleep(500, 1200);
+        } else if (bossMode && keyTotal > 0) {
+            Microbot.log("bossMode and keyTotal > 0");
+            Rs2Bank.withdrawOne(MOSSY_KEY);
+            sleep(500, 1200);
+            Rs2Bank.withdrawOne(BRONZE_AXE);
+            sleep(500, 1200);
+        } else if (keyTotal == 0) {
+            Microbot.log("keyTotal == 0");
+            bossMode = false;
+        }
+
+        // Randomize withdrawal order and add sleep between each to mimic human behavior
+        withdrawItemWithRandomSleep(AIR_RUNE, FIRE_RUNE, LAW_RUNE, FOOD);
+
+        if (Rs2Inventory.containsAll(new int[]{AIR_RUNE, FIRE_RUNE, LAW_RUNE, FOOD})) {
+            if (Rs2Bank.closeBank()) {
+                state = MossKillerState.WALK_TO_MOSS_GIANTS;
+            }
+        }
     }
+    sleep(500, 1000);
+}
+
+private void withdrawItemWithRandomSleep(int... itemIds) {
+    for (int itemId : itemIds) {
+        Rs2Bank.withdrawAll(itemId);
+        sleepUntil(() -> Rs2Inventory.contains(itemId), 3000);
+        sleep(300, 700);
+    }
+}
 
 
     public void walkToVarrockWestBank(){
