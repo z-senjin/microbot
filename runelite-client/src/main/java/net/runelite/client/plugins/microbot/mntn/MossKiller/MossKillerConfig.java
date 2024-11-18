@@ -25,4 +25,26 @@ public interface MossKillerConfig extends Config {
     {
         return 30;
  }
+
+    @ConfigItem(
+            keyName = "wildyMode",
+            name = "Kill Wildy Moss Giants?",
+            description = "Turn off Wilderness Warnings. Start in Ferox Enclave. Have all items equipped. It will save and deposit what is not needed.",
+            position = 0
+    )
+    default boolean wildyMode()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "isSlashWeaponEquipped",
+            name = "Slash Weapon Equipped?",
+            description = "Do you have a slash weapon equipped for spiders web? If False, have knife in bank.",
+            position = 0
+    )
+    default boolean isSlashWeaponEquipped()
+    {
+        return true;
+    }
 }

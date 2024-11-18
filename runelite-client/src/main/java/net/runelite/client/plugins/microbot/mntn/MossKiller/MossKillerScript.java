@@ -1,5 +1,6 @@
 package net.runelite.client.plugins.microbot.mntn.MossKiller;
 
+import net.runelite.api.ItemComposition;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
@@ -57,6 +58,8 @@ public class MossKillerScript extends Script {
     public final WorldPoint VARROCK_SQUARE = new WorldPoint(3212, 3422, 0);
     public final WorldPoint VARROCK_WEST_BANK = new WorldPoint(3253, 3420, 0);
 
+    public final WorldPoint FEROX_ENCLAVE = new WorldPoint(3130, 3631, 0);
+
 
     // Items
     public final int AIR_RUNE = 556;
@@ -66,14 +69,16 @@ public class MossKillerScript extends Script {
     // TODO: convert axe and food to be a list of all available stuff
     public int BRONZE_AXE = 1351;
     public int FOOD = 379;
+    public int KNIFE = 946;
 
     public int MOSSY_KEY = 22374;
 
     public int NATURE_RUNE = 561;
     public int DEATH_RUNE = 560;
     public int CHAOS_RUNE = 562;
+    public int RANARR_SEED = 5295;
     // TODO: add stuff for boss too
-    public int[] LOOT_LIST = new int[]{MOSSY_KEY, LAW_RUNE, AIR_RUNE, FIRE_RUNE, DEATH_RUNE, CHAOS_RUNE, NATURE_RUNE};
+    public int[] LOOT_LIST = new int[]{MOSSY_KEY, LAW_RUNE, AIR_RUNE, FIRE_RUNE, DEATH_RUNE, CHAOS_RUNE, NATURE_RUNE, RANARR_SEED};
 
 
     public MossKillerState state = MossKillerState.BANK;
@@ -128,15 +133,15 @@ public class MossKillerScript extends Script {
     }
 
     public void handleMossGiants() {
-
         WorldPoint playerLocation = Rs2Player.getWorldLocation();
-
         if (!Rs2Inventory.contains(FOOD) || BreakHandlerScript.breakIn <= 15){
+            Microbot.log("Inventory does not contains FOOD or break in less than 15");
             state = MossKillerState.TELEPORT;
             return;
         }
 
-        if(Rs2Walker.getDistanceBetween(playerLocation, MOSS_GIANT_SPOT) > 10){
+        if(Rs2Walker.getDistanceBetween(playerLocation, MOSS_GIANT_SPOT) > 15){
+            Microbot.log("getDistance between MOSS GIANT SPOT > 15");
             init();
             return;
         }
@@ -145,13 +150,24 @@ public class MossKillerScript extends Script {
 
         // Check if loot is nearby and pick it up if it's in LOOT_LIST
         for (int lootItem : LOOT_LIST) {
-            if(!Rs2Inventory.isFull() && Rs2GroundItem.interact(lootItem, "Take", 10)){
+            Rs2Item item = Rs2Inventory.get(lootItem);
+            if(Rs2Inventory.contains(lootItem) && item.isStackable() && Rs2GroundItem.interact(lootItem, "Take", 10)){
+                sleep(1000, 3000);
+            }else if(!Rs2Inventory.isFull() && Rs2GroundItem.interact(lootItem, "Take", 10)){
+                sleep(1000, 3000);
+            }else if(Rs2Inventory.isFull() && Rs2GroundItem.exists(MOSSY_KEY, 10)){
+                Rs2Player.eatAt(100);
+                sleep(500, 1000);
+                Rs2GroundItem.interact(MOSSY_KEY, "Take", 10);
                 sleep(1000, 3000);
             }
         }
 
+        Rs2GroundItem.lootItemBasedOnValue(1300, 10);
+
         // Check if any players are near
-        if(!getNearbyPlayers(7).isEmpty()){
+        if(!getNearbyPlayers(4).isEmpty()){
+            Microbot.log("Players nearby!! - playerCounter:" + playerCounter);
             // todo: add check in config if member or not
             if(playerCounter > 15) {
                 Microbot.log("Players nearby... hopping");
@@ -238,6 +254,10 @@ public class MossKillerScript extends Script {
             if(groundItems.length > 0){
                 for (RS2Item item : groundItems){
                     if (item != null){
+                        if(Rs2Inventory.isFull()){
+                            Rs2Player.eatAt(100);
+                            sleep(1000, 2000);
+                        }
                         if(Rs2GroundItem.interact(item)){
                             sleepUntil(() -> Rs2Inventory.contains(item.getItem().getId()), 10000);
                             sleep(250, 750);
@@ -364,6 +384,13 @@ public class MossKillerScript extends Script {
         } else if (keyTotal == 0) {
             Microbot.log("keyTotal == 0");
             bossMode = false;
+        }
+
+        Microbot.log(String.valueOf(config.isSlashWeaponEquipped()));
+
+        if(!config.isSlashWeaponEquipped()){
+            Rs2Bank.withdrawOne(KNIFE);
+            sleep(500, 1200);
         }
 
         // Randomize withdrawal order and add sleep between each to mimic human behavior
