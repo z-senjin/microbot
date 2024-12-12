@@ -13,7 +13,7 @@ public interface MossKillerConfig extends Config {
             position = 0
     )
     default String GUIDE() {
-        return "Have runes for teleport to varrock, lobsters, and bronze axe in bank. Start script in varrock west bank with armor and weapon equipped.";
+        return "Have runes for teleport to varrock,ame lobsters, and bronze axe in bank. Start script in varrock west bank with armor and weapon equipped.";
     }
     @ConfigItem(
             keyName = "keyThreshold",
@@ -33,6 +33,17 @@ public interface MossKillerConfig extends Config {
             position = 0
     )
     default boolean wildyMode()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "hopWhenPlayerIsNear",
+            name = "Hop worls when players are near?",
+            description = "Hop worlds when players are near you fighting moss giants.",
+            position = 1
+    )
+    default boolean hopWhenPlayerIsNear()
     {
         return true;
     }

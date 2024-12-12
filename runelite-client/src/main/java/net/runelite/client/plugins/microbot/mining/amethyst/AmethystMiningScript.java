@@ -50,9 +50,12 @@ public class AmethystMiningScript extends Script {
     }
 
     private void executeTask() {
-        if (!super.run() || !Microbot.isLoggedIn() || isClickHereToPlayButtonVisible() || Rs2Antiban.isIdleTooLong(50)) {
+
+        Microbot.log("Status: " + status);
+        if (!super.run() || !Microbot.isLoggedIn() || isClickHereToPlayButtonVisible()) {
             miningSpot = MiningSpot.NULL;
             oreVein = null;
+            Microbot.log("Status: 1");
             return;
         }
         if (config.pickAxeInInventory() && pickAxeInInventory.isEmpty()) {
@@ -61,15 +64,21 @@ public class AmethystMiningScript extends Script {
         if (pickAxeInInventory.isEmpty() && config.pickAxeInInventory()) {
             Microbot.showMessage("Pickaxe was not found in your inventory");
             sleep(5000);
+            Microbot.log("Status: 2");
             return;
         }
 
+        Microbot.log("Status: 3");
         if (Rs2AntibanSettings.actionCooldownActive) return;
-
+        Microbot.log("Status: 4");
         if (Rs2Player.isAnimating() || Microbot.getClient().getLocalPlayer().isInteracting()) return;
-
+        Microbot.log("Status: 5");
         handleDragonPickaxeSpec();
         handleInventory();
+
+
+
+
 
         switch (status) {
             case IDLE:
@@ -114,7 +123,7 @@ public class AmethystMiningScript extends Script {
         TileObject bank = Rs2GameObject.findObjectById(4483);
         if (Rs2Bank.openBank(bank)) {
             sleepUntil(Rs2Bank::isOpen);
-            Rs2Bank.depositAllExcept(pickAxeInInventory);
+            Rs2Bank.depositAll();
             sleep(100, 300);
 
             if (config.pickAxeInInventory() && !Rs2Inventory.hasItem(pickAxeInInventory)) {
@@ -145,16 +154,18 @@ public class AmethystMiningScript extends Script {
     }
 
     private void handleMining() {
-        if (oreVein != null) return;
-        if (miningSpot == MiningSpot.NULL)
+        Microbot.log("MiningSpot:" + miningSpot);
+        Microbot.log("oreVein:" + oreVein);
+   if (oreVein != null && Rs2Player.isAnimating()) return;
+        if (miningSpot == MiningSpot.NULL) {
+            sleep(2000, 12000);
             miningSpot = MiningSpot.getRandomMiningSpot();
-        else {
-            if (walkToMiningSpot()) {
+        } else {
+            walkToMiningSpot();
                 if (Rs2Player.isMoving()) return;
                 mineVein();
                 Rs2Antiban.actionCooldown();
                 Rs2Antiban.takeMicroBreakByChance();
-            }
         }
 
     }

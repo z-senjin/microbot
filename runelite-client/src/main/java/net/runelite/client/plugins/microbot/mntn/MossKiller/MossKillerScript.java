@@ -166,7 +166,7 @@ public class MossKillerScript extends Script {
         Rs2GroundItem.lootItemBasedOnValue(1300, 10);
 
         // Check if any players are near
-        if(!getNearbyPlayers(4).isEmpty()){
+        if(!getNearbyPlayers(4).isEmpty() && config.hopWhenPlayerIsNear()){
             Microbot.log("Players nearby!! - playerCounter:" + playerCounter);
             // todo: add check in config if member or not
             if(playerCounter > 15) {

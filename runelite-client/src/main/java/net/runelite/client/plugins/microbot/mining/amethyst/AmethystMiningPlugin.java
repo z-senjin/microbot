@@ -46,11 +46,11 @@ public class AmethystMiningPlugin extends Plugin {
         WallObject wallObject = event.getWallObject();
         if (wallObject == null)
             return;
-        if (AmethystMiningScript.status == Status.MINING && wallObject.getId() == ObjectID.EMPTY_WALL) {
-            if (wallObject.getWorldLocation().equals(AmethystMiningScript.oreVein.getWorldLocation())) {
-                AmethystMiningScript.oreVein = null;
-            }
-        }
+//        if (AmethystMiningScript.status == Status.MINING && wallObject.getId() == ObjectID.EMPTY_WALL) {
+//            if (wallObject.getWorldLocation().equals(AmethystMiningScript.oreVein.getWorldLocation())) {
+//                AmethystMiningScript.oreVein = null;
+//            }
+//        }
     }
 
     protected void shutDown() {
