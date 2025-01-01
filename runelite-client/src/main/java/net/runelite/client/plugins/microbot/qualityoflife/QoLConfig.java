@@ -2,6 +2,7 @@ package net.runelite.client.plugins.microbot.qualityoflife;
 
 import net.runelite.client.config.*;
 import net.runelite.client.plugins.microbot.fletching.enums.FletchingItem;
+import net.runelite.client.plugins.microbot.inventorysetups.InventorySetup;
 import net.runelite.client.plugins.microbot.qualityoflife.enums.WintertodtActions;
 import net.runelite.client.plugins.microbot.util.misc.SpecialAttackWeaponEnum;
 
@@ -64,17 +65,41 @@ public interface QoLConfig extends Config {
     @ConfigSection(
             name = "Wintertodt",
             description = "Wintertodt settings",
-            position = 7
+            position = 70
     )
     String wintertodtSection = "wintertodtSection";
+
+    // Guardian of the rift section
+    @ConfigSection(
+            name = "Guardian of the Rift",
+            description = "Guardian of the Rift settings",
+            position = 71
+    )
+    String guardianOfTheRiftSection = "guardianOfTheRiftSection";
 
     // Fletching section
     @ConfigSection(
             name = "Fletching",
             description = "Fletching settings",
-            position = 8
+            position = 80
     )
     String fletchingSection = "fletchingSection";
+
+    // Firemaking section
+    @ConfigSection(
+            name = "Firemaking",
+            description = "Firemaking settings",
+            position = 81
+    )
+    String firemakingSection = "firemakingSection";
+
+    // Runecrafting section
+    @ConfigSection(
+            name = "Runecrafting",
+            description = "Runecrafting settings",
+            position = 82
+    )
+    String runecraftingSection = "runecraftingSection";
 
     // boolean to render Max Hit Overlay
     @ConfigItem(
@@ -124,15 +149,27 @@ public interface QoLConfig extends Config {
         return true;
     }
 
-    // boolean for DoLast action on Workbench
+    // boolean for Smart Workbench
     @ConfigItem(
-            keyName = "useDoLastWorkbench",
-            name = "Use Do-Last Workbench",
-            description = "Use Do-Last Workbench",
-            position = 3,
-            section = doLastSection
+            keyName = "smartWorkbench",
+            name = "Smart Workbench",
+            description = "Fills empty pouches and continues crafting Guardian essence",
+            position = 1,
+            section = guardianOfTheRiftSection
     )
-    default boolean useDoLastWorkbench() {
+    default boolean smartWorkbench() {
+        return true;
+    }
+
+    // boolean for Smart Mine
+    @ConfigItem(
+            keyName = "smartGotrMine",
+            name = "Smart Mine",
+            description = "Fills empty pouches and continues and continues mining huge remains",
+            position = 2,
+            section = guardianOfTheRiftSection
+    )
+    default boolean smartGotrMine() {
         return true;
     }
 
@@ -349,8 +386,8 @@ public interface QoLConfig extends Config {
             position = 2,
             section = inventorySection
     )
-    default String Setup1() {
-        return "";
+    default InventorySetup Setup1(){
+        return null;
     }
 
     // boolean to display Setup 2
@@ -373,8 +410,8 @@ public interface QoLConfig extends Config {
             position = 4,
             section = inventorySection
     )
-    default String Setup2() {
-        return "";
+    default InventorySetup Setup2(){
+        return null;
     }
 
     // boolean to display Setup 3
@@ -397,8 +434,8 @@ public interface QoLConfig extends Config {
             position = 6,
             section = inventorySection
     )
-    default String Setup3() {
-        return "";
+    default InventorySetup Setup3(){
+        return null;
     }
 
     // boolean to display Setup 4
@@ -421,9 +458,46 @@ public interface QoLConfig extends Config {
             position = 8,
             section = inventorySection
     )
-    default String Setup4() {
+    default InventorySetup Setup4(){
+        return null;
+    }
+
+    // Boolean to use auto drop
+    @ConfigItem(
+            keyName = "autoDrop",
+            name = "Auto Drop",
+            description = "Auto Drop",
+            position = 9,
+            section = inventorySection
+    )
+    default boolean autoDrop() {
+        return false;
+    }
+
+    // String for item list to auto drop
+    @ConfigItem(
+            keyName = "autoDropItems",
+            name = "Items:",
+            description = "Items to auto drop, separated by commas",
+            position = 10,
+            section = inventorySection
+    )
+    default String autoDropItems() {
         return "";
     }
+
+    // Boolean to exclude items from auto drop
+    @ConfigItem(
+            keyName = "excludeItems",
+            name = "Exclude Items",
+            description = "Exclude Items instead of including them in auto drop",
+            position = 11,
+            section = inventorySection
+    )
+    default boolean excludeItems() {
+        return false;
+    }
+
 
     // boolean to fix camera pitch on login
     @ConfigItem(
@@ -651,6 +725,30 @@ public interface QoLConfig extends Config {
     )
     default boolean quickFletchHeadlessArrows() {
         return false;
+    }
+
+    // boolean to quick firemake logs
+    @ConfigItem(
+            keyName = "quickFiremakeLogs",
+            name = "Quick Firemake Logs",
+            description = "Option to quick firemake logs",
+            position = 0,
+            section = firemakingSection
+    )
+    default boolean quickFiremakeLogs() {
+        return false;
+    }
+
+    // boolean to Smart Runecraft
+    @ConfigItem(
+            keyName = "smartRunecraft",
+            name = "Smart Runecraft",
+            description = "Fills empty pouches and continues crafting runes",
+            position = 0,
+            section = runecraftingSection
+    )
+    default boolean smartRunecraft() {
+        return true;
     }
 
 

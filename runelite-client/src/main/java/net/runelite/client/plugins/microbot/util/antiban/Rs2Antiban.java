@@ -11,7 +11,6 @@ import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.antiban.enums.ActivityIntensity;
 import net.runelite.client.plugins.microbot.util.antiban.enums.Category;
 import net.runelite.client.plugins.microbot.util.antiban.enums.PlayStyle;
-import net.runelite.client.plugins.microbot.util.math.Random;
 import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.ui.overlay.components.*;
@@ -350,7 +349,7 @@ public class Rs2Antiban {
         }
         if (Math.random() < Rs2AntibanSettings.microBreakChance) {
             Rs2AntibanSettings.microBreakActive = true;
-            BreakHandlerScript.breakDuration = Random.random(Rs2AntibanSettings.microBreakDurationLow * 60, Rs2AntibanSettings.microBreakDurationHigh * 60);
+            BreakHandlerScript.breakDuration = Rs2Random.between(Rs2AntibanSettings.microBreakDurationLow*60, Rs2AntibanSettings.microBreakDurationHigh*60);
             if (Rs2AntibanSettings.moveMouseOffScreen)
                 moveMouseOffScreen();
             return true;
@@ -552,7 +551,7 @@ public class Rs2Antiban {
         Rs2AntibanSettings.reset();
         Rs2Antiban.playStyle = null;
         Rs2Antiban.activity = null;
-        Rs2Antiban.activityIntensity = null;
+        Rs2Antiban.activityIntensity = ActivityIntensity.EXTREME;
         Rs2Antiban.category = null;
     }
 

@@ -146,7 +146,7 @@ public enum Category {
     SKILLING_THIEVING("Skilling/Thieving") {
         @Override
         public boolean isBusyInternal() {
-            return !Rs2Player.isAnimating();
+            return Rs2Player.isAnimating();
         }
     },
     SKILLING("Skilling") {
@@ -182,7 +182,7 @@ public enum Category {
     SKILLING_RUNECRAFT("Skilling/Runecraft") {
         @Override
         public boolean isBusyInternal() {
-            return Rs2Inventory.contains("pure essence", "rune essence", "Daeyalt essence", "Dark essence fragment", "blood essence");
+            return Rs2Inventory.contains("pure essence", "rune essence", "Daeyalt essence", "Dark essence fragment");
         }
     },
     SKILLING_SMITHING("Skilling/Smithing") {

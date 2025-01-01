@@ -929,8 +929,8 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
                     }
 
                     if (transport.getType() == TransportType.CHARTER_SHIP) {
-                        if (Rs2Widget.getWidget(885, 0) != null) {
-                            Widget destination = Rs2Widget.findWidget(transport.getDisplayInfo(), Arrays.stream(Rs2Widget.getWidget(885, 0).getStaticChildren()).collect(Collectors.toList()), false);
+                        if (Rs2Widget.getWidget(72, 0) != null) {
+                            Widget destination = Rs2Widget.findWidget(transport.getDisplayInfo(), Arrays.stream(Rs2Widget.getWidget(72, 0).getStaticChildren()).collect(Collectors.toList()), false);
                             if (destination == null) break;
 
                             Rs2Widget.clickWidget(destination);
@@ -950,6 +950,13 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
                     
                     if (transport.getType() == TransportType.QUETZAL) {
                         if (handleQuetzal(transport)) {
+                            sleep(600 * 2); // wait 2 extra ticks before walking
+                            break;
+                        }
+                    }
+                    
+                    if (transport.getType() == TransportType.MAGIC_CARPET) {
+                        if (handleMagicCarpet(transport)) {
                             sleep(600 * 2); // wait 2 extra ticks before walking
                             break;
                         }
@@ -1022,6 +1029,7 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
     }
 
     private static void handleObject(Transport transport, TileObject tileObject) {
+        System.out.println("tile object");
         Rs2GameObject.interact(tileObject, transport.getAction());
         if (transport.getDestination().getPlane() == Rs2Player.getWorldLocation().getPlane()) {
             if (handleObjectExceptions(tileObject)) return;
@@ -1051,6 +1059,15 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
             Rs2Player.waitForAnimation();
             Rs2Player.waitForAnimation();
             return true;
+        }
+        // Handle Leaves Traps in Isafdar Forest
+        if (tileObject.getId() == ObjectID.LEAVES_3925) {
+            Rs2Player.waitForAnimation(1200);
+            if (Rs2Player.getWorldLocation().getY() > 6400) {
+                Rs2GameObject.interact(ObjectID.PROTRUDING_ROCKS_3927);
+                sleepUntil(() -> Rs2Player.getWorldLocation().getY() < 6400);
+                return true;
+            }
         }
         return false;
     }
@@ -1104,7 +1121,7 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
 
         List<String> locationKeyWords = Arrays.asList("farm", "monastery", "lletya", "prifddinas", "rellekka", "waterbirth island", "neitiznot", "jatiszo",
                 "ver sinhaza", "darkmeyer", "slepe", "troll stronghold", "weiss", "ecto", "burgh", "duradel", "gem mine", "nardah", "kalphite cave",
-                "kourend woodland", "mount karuulm", "grand exchange", "outside");
+                "kourend woodland", "mount karuulm", "outside", "fishing guild", "otto's grotto");
         List<String> genericKeyWords = Arrays.asList("invoke", "empty", "consume", "rub", "break", "teleport", "reminisce", "signal", "play");
 
         boolean hasMultipleDestination = transport.getDisplayInfo().contains(":");
@@ -1181,6 +1198,7 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
     public static boolean handleTrapdoor(Transport transport) {
         Map<Integer, Integer> trapdoors = new HashMap<>();
         trapdoors.put(1579, 1581); // closed trapdoor -> open trapdoor
+        trapdoors.put(881, 882); // closed manhole -> open manhole (used for varrock sewers)
 
         for (Map.Entry<Integer, Integer> entry : trapdoors.entrySet()) {
             int closedTrapdoorId = entry.getKey();
@@ -1352,7 +1370,18 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
         }
         return false;
     } 
+    
+    private static boolean handleMagicCarpet(Transport transport) {
+        final int flyingPoseAnimation = 6936;
+        NPC rugMerchant = Rs2Npc.getNpc(transport.getObjectId());
+        if (rugMerchant == null) return false;
 
+        Rs2Npc.interact(rugMerchant, transport.getAction());
+        Rs2Dialogue.sleepUntilInDialogue();
+        Rs2Dialogue.clickOption(transport.getDisplayInfo());
+        sleepUntil(() -> Rs2Player.getPoseAnimation() == flyingPoseAnimation, 10000);
+        return sleepUntilTrue(() -> Rs2Player.getPoseAnimation() != flyingPoseAnimation, 600,60000);
+    }
     /**
      * interact with interfaces like spirit tree & xeric talisman etc...
      *
@@ -1362,7 +1391,7 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
         if (transport.getDisplayInfo() == null || transport.getDisplayInfo().isEmpty()) return false;
 
         // Wait for the widget to become visible
-        boolean isAdventureLogVisible = sleepUntilTrue(() -> !Rs2Widget.isHidden(ComponentID.ADVENTURE_LOG_CONTAINER));
+        boolean isAdventureLogVisible = sleepUntilTrue(() -> !Rs2Widget.isHidden(ComponentID.ADVENTURE_LOG_CONTAINER), Rs2Player::isMoving, 100, 10000);
 
         if (!isAdventureLogVisible) {
             Microbot.log("Widget did not become visible within the timeout.");
@@ -1409,7 +1438,8 @@ public static List<WorldPoint> getWalkPath(WorldPoint target) {
 
 
         // Wait for the widget to become visible
-        boolean widgetVisible = !Rs2Widget.isHidden(GLIDER_PARENT_WIDGET, GLIDER_CHILD_WIDGET);
+        boolean widgetVisible = sleepUntilTrue(() -> !Rs2Widget.isHidden(GLIDER_PARENT_WIDGET, GLIDER_CHILD_WIDGET), Rs2Player::isMoving, 100, 10000);
+        
         if (!widgetVisible) {
             Microbot.log("Widget did not become visible within the timeout.");
             return false;
