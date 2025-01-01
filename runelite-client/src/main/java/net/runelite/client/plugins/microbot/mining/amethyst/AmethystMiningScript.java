@@ -184,7 +184,7 @@ public class AmethystMiningScript extends Script {
 
     private void handleMining() {
         if (oreVein != null && AntibanPlugin.isMining()) return;
-        if (miningSpot == MiningSpot.NULL)
+        if (miningSpot == MiningSpot.NULL){
             miningSpot = MiningSpot.getRandomMiningSpot();
         } else {
             walkToMiningSpot();
