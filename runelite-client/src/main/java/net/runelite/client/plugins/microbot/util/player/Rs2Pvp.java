@@ -38,6 +38,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class Rs2Pvp {
     private static final Polygon NOT_WILDERNESS_BLACK_KNIGHTS = new Polygon( // this is black knights castle
@@ -48,6 +49,13 @@ public class Rs2Pvp {
                     3545, 3545, 3546, 3546, 3545, 3544, 3543, 3543, 3542, 3541, 3540, 3539, 3537, 3536, 3535, 3534, 3533, 3532,
                     3531, 3530, 3529, 3528, 3527, 3526, 3526, 3525},
             43
+    );
+    private static final Polygon FEROX_ENCLAVE = new Polygon(
+            new int[]{3128, 3128, 3123, 3123, 3120, 3120, 3117, 3117, 3119, 3119, 3120, 3120, 3125, 3125, 3127, 3127, 3129, 
+                    3129, 3137, 3137, 3147, 3147, 3156, 3156, 3161, 3161, 3153, 3153, 3152, 3151, 3150, 3149, 3145, 3145, 3141, 3141},
+            new int[]{3609, 3615, 3615, 3620, 3620, 3622, 3622, 3635, 3635, 3640, 3640, 3645, 3645, 3644, 3644, 3645, 3645, 
+                    3644, 3644, 3646, 3646, 3647, 3647, 3642, 3642, 3626, 3626, 3623, 3623, 3622, 3621, 3620, 3620, 3615, 3615, 3609},
+            36
     );
     private static final Cuboid MAIN_WILDERNESS_CUBOID = new Cuboid(2944, 3525, 0, 3391, 4351, 3);
     private static final Cuboid GOD_WARS_WILDERNESS_CUBOID = new Cuboid(3008, 10112, 0, 3071, 10175, 3);
@@ -71,7 +79,7 @@ public class Rs2Pvp {
      */
     public static int getWildernessLevelFrom(WorldPoint point) {
         int regionID = point.getRegionID();
-        if (regionID != 12700 && regionID != 12187) {
+        if (regionID != 12700 && regionID != 12187 && !FEROX_ENCLAVE.contains(point.getX(), point.getY())) {
             if (WILDERNESS_BH_CRATER.contains(point) && !WILDERNESS_BH_CRATER_TWO.contains(point)) {
                 return 5;
             } else if (MAIN_WILDERNESS_CUBOID.contains(point)) {
@@ -101,12 +109,21 @@ public class Rs2Pvp {
     }
 
     /**
+     * Checks if the player is in the wilderness
+     * 
+     * @return True if the player is in the wilderness
+     */
+    public static boolean isInWilderness() {
+        return Microbot.getVarbitValue(Varbits.IN_WILDERNESS) == 1;
+    }
+
+    /**
      * Determines if another player is attackable based off of wilderness level and combat levels
      *
-     * @param player the player to determine attackability
+     * @param rs2Player the player to determine attackability
      * @return returns true if the player is attackable, false otherwise
      */
-    public static boolean isAttackable(Player player) {
+    public static boolean isAttackable(Rs2PlayerModel rs2Player) {
         int wildernessLevel = 0;
 
         if (WorldType.isDeadmanWorld(Microbot.getClient().getWorldType())) {
@@ -118,17 +135,21 @@ public class Rs2Pvp {
         if (Microbot.getVarbitValue(Varbits.IN_WILDERNESS) == 1) {
             wildernessLevel += getWildernessLevelFrom(Microbot.getClient().getLocalPlayer().getWorldLocation());
         }
-        return wildernessLevel != 0 && Math.abs(Microbot.getClient().getLocalPlayer().getCombatLevel() - player.getCombatLevel()) <= wildernessLevel;
+        return wildernessLevel != 0 && Math.abs(Microbot.getClient().getLocalPlayer().getCombatLevel() - rs2Player.getCombatLevel()) <= wildernessLevel;
+    }
+    
+    public static boolean isAttackable(Player player) {
+        return isAttackable(new Rs2PlayerModel(player));
     }
 
     /**
      * Determines if another player is attackable based off of wilderness level and combat levels
      *
-     * @param player the player to determine attackability
+     * @param rs2Player the player to determine attackability
      * @return returns true if the player is attackable, false otherwise
      */
-    public static boolean isAttackable(Player player, boolean isDeadManworld, boolean isPvpWorld, int wildernessLevel) {
-        return wildernessLevel != 0 && Math.abs(Microbot.getClient().getLocalPlayer().getCombatLevel() - player.getCombatLevel()) <= wildernessLevel;
+    public static boolean isAttackable(Rs2PlayerModel rs2Player, boolean isDeadManworld, boolean isPvpWorld, int wildernessLevel) {
+        return wildernessLevel != 0 && Math.abs(Microbot.getClient().getLocalPlayer().getCombatLevel() - rs2Player.getCombatLevel()) <= wildernessLevel;
     }
 
     /**
@@ -136,14 +157,14 @@ public class Rs2Pvp {
      * @return
      */
     public static boolean isAttackable() {
-        List<Player> players = Rs2Player.getPlayers();
+        List<Rs2PlayerModel> players = Rs2Player.getPlayers(player -> true).collect(Collectors.toList());
         int wildernessLevel = 0;
         boolean isDeadManWorld = WorldType.isDeadmanWorld(Microbot.getClient().getWorldType());
         boolean isPVPWorld = WorldType.isPvpWorld(Microbot.getClient().getWorldType());
         if (Microbot.getVarbitValue(Varbits.IN_WILDERNESS) == 1) {
             wildernessLevel += getWildernessLevelFrom(Microbot.getClient().getLocalPlayer().getWorldLocation());
         }
-        for(Player player: players) {
+        for (Rs2PlayerModel player: players) {
             if (!isAttackable(player, isDeadManWorld, isPVPWorld, wildernessLevel)) continue;
             System.out.println("Player: " + player.getName() + " with combat " + player.getCombatLevel() + " detected!");
             return true;

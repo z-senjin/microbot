@@ -22,7 +22,7 @@ import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Magic;
-import net.runelite.client.plugins.microbot.util.math.Random;
+import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.misc.Rs2Potion;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
@@ -83,7 +83,7 @@ public class VorkathScript extends Script {
     }
 
     private static void drinkPrayer() {
-        if ((Microbot.getClient().getBoostedSkillLevel(Skill.PRAYER) * 100) / Microbot.getClient().getRealSkillLevel(Skill.PRAYER) < Random.random(25, 30)) {
+        if ((Microbot.getClient().getBoostedSkillLevel(Skill.PRAYER) * 100) / Microbot.getClient().getRealSkillLevel(Skill.PRAYER) < Rs2Random.between(25, 30)) {
             Rs2Inventory.interact(Rs2Potion.getPrayerPotionsVariants(), "drink");
         }
     }
@@ -224,11 +224,15 @@ public class VorkathScript extends Script {
                             Rs2Npc.interact(NpcID.VORKATH_8059, "Poke");
                             Rs2Player.waitForWalking();
                             Rs2Npc.interact(NpcID.VORKATH_8059, "Poke");
-                            Rs2Player.waitForAnimation(10000);
+                            Rs2Player.waitForAnimation(1000);
                             walkToCenter();
                             Rs2Player.waitForWalking();
                             handlePrayer();
                             sleepUntil(() -> Rs2Npc.getNpc(NpcID.VORKATH_8061) != null);
+                            if (doesProjectileExistById(redProjectileId)) {
+                                handleRedBall();
+                                sleep(300);
+                            }
                             state = State.FIGHT_VORKATH;
                         }
                         break;
@@ -299,7 +303,11 @@ public class VorkathScript extends Script {
                             Rs2Tab.switchToInventoryTab();
                             state = State.FIGHT_VORKATH;
                             sleepUntil(() -> Rs2Npc.getNpc("Zombified Spawn") == null);
-                            sleep(1000);
+                            if (doesProjectileExistById(redProjectileId)) {
+                                handleRedBall();
+                                sleep(300);
+                            }
+
                         }
                         break;
                     case ACID:
@@ -339,8 +347,6 @@ public class VorkathScript extends Script {
                             if (foodInventorySize < 3 || !hasVenom || !hasSuperAntifire || !hasRangePotion || (!hasPrayerPotion && !Rs2Player.hasPrayerPoints())) {
                                 leaveVorkath();
                             } else {
-                                walkToCenter();
-                                Rs2Player.waitForWalking();
                                 calculateState();
                             }
                         }
@@ -407,7 +413,7 @@ public class VorkathScript extends Script {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 100, TimeUnit.MILLISECONDS);
+        }, 0, 80, TimeUnit.MILLISECONDS);
         return true;
     }
 
@@ -471,18 +477,18 @@ public class VorkathScript extends Script {
 
     private boolean drinkPotions() {
         if (Rs2Player.isAnimating()) return false;
-        boolean drinkRangePotion = !Rs2Player.hasDivineBastionActive() && !Rs2Player.hasDivineRangedActive() && !Rs2Player.hasRangingPotionActive();
+        boolean drinkRangePotion = !Rs2Player.hasDivineBastionActive() && !Rs2Player.hasDivineRangedActive() && !Rs2Player.hasRangingPotionActive(5);
         boolean drinkAntiFire = !Rs2Player.hasAntiFireActive() && !Rs2Player.hasSuperAntiFireActive();
         boolean drinkAntiVenom = !Rs2Player.hasAntiVenomActive();
 
         if (drinkRangePotion) {
-             Rs2Inventory.interact(Rs2Potion.getRangePotionsVariants(), "drink");
+            Rs2Inventory.interact(Rs2Potion.getRangePotionsVariants(), "drink");
         }
         if (drinkAntiFire) {
-             Rs2Inventory.interact("super antifire", "drink");
+            Rs2Inventory.interact("super antifire", "drink");
         }
         if (drinkAntiVenom) {
-             Rs2Inventory.interact("venom", "drink");
+            Rs2Inventory.interact("venom", "drink");
         }
 
         if (!Microbot.getClient().getLocalPlayer().isInteracting() && state == State.PREPARE_FIGHT && (drinkRangePotion || drinkAntiFire || drinkAntiVenom))
@@ -531,7 +537,7 @@ public class VorkathScript extends Script {
     private void redBallWalk() {
         WorldPoint currentPlayerLocation = Microbot.getClient().getLocalPlayer().getWorldLocation();
         WorldPoint sideStepLocation = new WorldPoint(currentPlayerLocation.getX() + 2, currentPlayerLocation.getY(), 0);
-        if (Random.random(0, 2) == 1) {
+        if (Rs2Random.between(0, 2) == 1) {
             sideStepLocation = new WorldPoint(currentPlayerLocation.getX() - 2, currentPlayerLocation.getY(), 0);
         }
         final WorldPoint _sideStepLocation = sideStepLocation;
@@ -580,7 +586,7 @@ public class VorkathScript extends Script {
             if (playerLocation.equals(safeTile)) {
                 Rs2Npc.interact(vorkath, "attack");
             } else {
-                Rs2Player.eatAt(75);
+                Rs2Player.eatAt(60);
                 Rs2Walker.walkFastLocal(LocalPoint.fromWorld(Microbot.getClient(), safeTile));
             }
         }
@@ -595,7 +601,7 @@ public class VorkathScript extends Script {
             if (playerLocation.equals(safeTile)) {
                 Rs2Npc.interact(vorkath, "attack");
             } else {
-                Rs2Player.eatAt(75);
+                Rs2Player.eatAt(60);
                 Rs2Walker.walkFastLocal(LocalPoint.fromWorld(Microbot.getClient(), safeTile));
             }
         }

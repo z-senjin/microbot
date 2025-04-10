@@ -6,10 +6,6 @@ import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.chat.ChatColorType;
-import net.runelite.client.chat.ChatMessageBuilder;
-import net.runelite.client.chat.ChatMessageManager;
-import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
@@ -17,6 +13,7 @@ import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
+import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
@@ -57,7 +54,7 @@ public class SummerGardenScript extends Script {
     public boolean sendRs2InventoryFullNotification = false;
     private BotState botState = BotState.RUN;
 
-    public boolean run(SummerGardenConfig config, ChatMessageManager chatMessageManager) {
+    public boolean run(SummerGardenConfig config) {
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             if (!super.run()) return;
             try {
@@ -71,7 +68,7 @@ public class SummerGardenScript extends Script {
                 }
 
                 if (config.autoHandInAndReset()) {
-                    var interactingActor = Microbot.getClient().getLocalPlayer().getInteracting();
+                    var interactingActor = Rs2Player.getInteracting();
                     if (interactingActor != null) {
                         lastInteractedActor = interactingActor;
                     }
@@ -100,14 +97,7 @@ public class SummerGardenScript extends Script {
                         if (config.sendInvFullNotification() && !sendRs2InventoryFullNotification) {
                             // this line causes a freeze when using dev mode
                             //Microbot.getClient().playSoundEffect(OUT_OF_SUPPLY_SOUND, SoundEffectVolume.HIGH);
-                            String message = new ChatMessageBuilder()
-                                    .append(ChatColorType.HIGHLIGHT)
-                                    .append("You need a beer glass and a pestle and mortar to make sq'irk juice.")
-                                    .build();
-                            chatMessageManager.queue(QueuedMessage.builder()
-                                    .type(ChatMessageType.CONSOLE)
-                                    .runeLiteFormattedMessage(message)
-                                    .build());
+                            Microbot.log("You need a beer glass and a pestle and mortar to make sq'irk juice.");
                             sendRs2InventoryFullNotification = true;
                         }
                         return;
@@ -236,8 +226,8 @@ public class SummerGardenScript extends Script {
         if (Microbot.getClient().getLocalPlayer().getWorldLocation().equals(WORLD_POINT_MAZE_STARTING_LOCATION)) {
             if (config.waitForOneClick() || ElementalCollisionDetector.getTicksUntilStart() == 0) {
                 Rs2GameObject.interact(OBJECT_SUMMER_TREE);
-                sleepUntil(() -> Microbot.isMoving());
-                sleepUntil(() -> !Microbot.isMoving(), 30000);
+                sleepUntil(() -> Rs2Player.isMoving());
+                sleepUntil(() -> !Rs2Player.isMoving(), 30000);
                 sleepUntilOnClientThread(() -> Microbot.getClient().getLocalPlayer().getWorldLocation().getY() < 5481);
                 sleep(1500);//caught or success timeout
             }
@@ -253,8 +243,8 @@ public class SummerGardenScript extends Script {
         TileObject gate = Rs2GameObject.findObjectById(ObjectID.GATE_11987);
         if (gate != null) {
             Rs2GameObject.interact(gate);
-            sleepUntil(Microbot::isMoving);
-            sleepUntil(() -> !Microbot.isMoving());
+            sleepUntil(Rs2Player::isMoving);
+            sleepUntil(() -> !Rs2Player.isMoving());
             sleepUntilOnClientThread(() -> Microbot.getClient().getLocalPlayer().getWorldLocation().equals(WORLD_POINT_MAZE_STARTING_LOCATION));
         }
     }
@@ -293,7 +283,7 @@ public class SummerGardenScript extends Script {
         // Interact with Osman.
         if (lastInteractedActor == null || !Objects.equals(lastInteractedActor.getName(), NPC_NAME_OSMAN)) {
             Rs2Npc.interact(NPC_NAME_OSMAN, "Talk-to");
-            sleepUntil(() -> Microbot.getClient().getLocalPlayer().getInteracting() != null, 2000);
+            sleepUntil(() -> Rs2Player.getInteracting() != null, 2000);
             return;
         }
 

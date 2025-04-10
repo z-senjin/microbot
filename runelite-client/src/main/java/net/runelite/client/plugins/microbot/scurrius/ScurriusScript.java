@@ -1,16 +1,20 @@
 package net.runelite.client.plugins.microbot.scurrius;
 
 import com.google.inject.Inject;
+import net.runelite.api.ItemID;
 import net.runelite.api.ObjectID;
 import net.runelite.api.Skill;
+import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.scurrius.enums.State;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
+import net.runelite.client.plugins.microbot.util.coords.Rs2LocalPoint;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
+import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2PrayerEnum;
@@ -22,6 +26,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.concurrent.ThreadLocalRandom;
@@ -39,9 +44,9 @@ public class ScurriusScript extends Script {
     private static final int PRAYER_COOLDOWN_MS = 2000;
 
     final WorldPoint bossLocation = new WorldPoint(3279, 9869, 0);
-    final List<Integer> scurriusNpcIds = List.of(7221, 7222);
+    final WorldArea fightRoom = new WorldArea(new WorldPoint(3290, 9860, 0), 17, 17);
     public static State state = State.BANKING;
-    net.runelite.api.NPC scurrius = null;
+    Rs2NpcModel scurrius = null;
     private State previousState = null;
     private boolean hasLoggedRespawnWait = false;
     private Boolean previousInFightRoom = null;
@@ -55,6 +60,7 @@ public class ScurriusScript extends Script {
     public boolean run(ScurriusConfig config) {
         this.config = config;
         Microbot.enableAutoRunOn = true;
+        List<Integer> importantItems = List.of(config.foodSelection().getId(), config.potionSelection().getItemId(), ItemID.VARROCK_TELEPORT);
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 if (!Microbot.isLoggedIn()) return;
@@ -67,13 +73,10 @@ public class ScurriusScript extends Script {
                     previousState = state;
                 }
 
-                for (int scurriusNpcId : scurriusNpcIds) {
-                    scurrius = Rs2Npc.getNpc(scurriusNpcId);
-                    if (scurrius != null) break;
-                }
+                scurrius = Rs2Npc.getNpc("Scurrius", true);
 
                 boolean hasFood = !Rs2Inventory.getInventoryFood().isEmpty();
-                boolean hasPrayerPotions = Rs2Inventory.hasItem("prayer potion");
+                boolean hasPrayerPotions = Rs2Inventory.hasItem("prayer potion") || Rs2Inventory.hasItem("super restore");
                 boolean isScurriusPresent = scurrius != null;
                 boolean isInFightRoom = isInFightRoom();
                 boolean hasLineOfSightWithScurrius = Rs2Npc.hasLineOfSight(scurrius);
@@ -85,10 +88,8 @@ public class ScurriusScript extends Script {
 
                 if (!isScurriusPresent && !hasFood && !hasPrayerPotions) {
                     if (isInFightRoom) {
-                        if (Rs2Inventory.hasItem("Varrock teleport")) {
-                            Rs2Inventory.interact("Varrock teleport", "break");
-                            Microbot.log("Teleporting out of the fight room due to lack of supplies.");
-                            state = State.BANKING;
+                        if (Rs2Inventory.hasItem(ItemID.VARROCK_TELEPORT)) {
+                            state = State.TELEPORT_AWAY;
                         } else {
                             Microbot.log("No teleport available. Attempting to walk to bank (will likely fail).");
                         }
@@ -105,7 +106,6 @@ public class ScurriusScript extends Script {
                 }
 
                 if (state != State.WAITING_FOR_BOSS) {
-                    attemptLooting(config);
                     if (isScurriusPresent && hasFood && hasLineOfSightWithScurrius) {
                         state = State.FIGHTING;
                     }
@@ -131,15 +131,30 @@ public class ScurriusScript extends Script {
                             Rs2Bank.useBank();
                         }
                         if (Rs2Bank.isOpen()) {
-                            Rs2Bank.depositAll();
-                            int foodAmount = config.foodAmount();
-                            int foodItemId = config.foodSelection().getId();
-                            int prayerPotionAmount = config.prayerPotionAmount();
-                            int potionItemId = config.potionSelection().getItemId();
-                            Rs2Bank.withdrawX(true, foodItemId, foodAmount);
-                            Rs2Bank.withdrawX(true, potionItemId, prayerPotionAmount);
-                            Rs2Bank.withdrawX(true, "varrock teleport", 3);
+                            Rs2Bank.depositAllExcept(importantItems.toArray(new Integer[0]));
+                            
+                            int requiredFoodAmount = config.foodAmount();
+                            int requiredPotionAmount = config.prayerPotionAmount();
+                            int requiredTeleports = config.teleportAmount();
+                            
+                            if (!Rs2Bank.withdrawDeficit(config.foodSelection().getId(), requiredFoodAmount)) {
+                                Microbot.showMessage("Missing Food in Bank");
+                                shutdown();
+                                return;
+                            }
+                            if (!Rs2Bank.withdrawDeficit(config.potionSelection().getItemId(), requiredPotionAmount)) {
+                                Microbot.showMessage("Missing Potion in Bank");
+                                shutdown();
+                                return;
+                            }
+                            if (!Rs2Bank.withdrawDeficit(ItemID.VARROCK_TELEPORT, requiredTeleports)) {
+                                Microbot.showMessage("Missing Teleports in Bank");
+                                shutdown();
+                                return;
+                            }
+
                             Rs2Bank.closeBank();
+                            sleepUntil(() -> !Rs2Bank.isOpen());
                         }
                         break;
 
@@ -186,19 +201,24 @@ public class ScurriusScript extends Script {
                             }
                         }
 
-                        boolean didWeAttackAGiantRat = scurrius != null && config.prioritizeRats() && Rs2Npc.attack("giant rat");
-                        if (didWeAttackAGiantRat) return;
-
+                        Optional<Rs2NpcModel> giantRat = Rs2Npc.getNpcs("giant rat").filter(npc -> !npc.isDead()).findFirst();
+                        if (giantRat.isPresent()) {
+                            Rs2NpcModel giantRatModel = giantRat.get();
+                            boolean didWeAttackAGiantRat = scurrius != null && config.prioritizeRats() && Rs2Npc.attack(giantRatModel);
+                            if (didWeAttackAGiantRat) return;
+                        }
+                        
                         if (!Microbot.getClient().getLocalPlayer().isInteracting()) {
                             Rs2Npc.attack(scurrius);
                         }
                         break;
 
                     case TELEPORT_AWAY:
-                        if (Rs2Inventory.getInventoryFood().isEmpty()) {
-                            Rs2Inventory.interact("Varrock teleport", "break");
-                            state = State.BANKING;
-                        }
+                        Rs2Inventory.interact("Varrock teleport", "break");
+                        sleepUntil(() -> !isInFightRoom());
+                        sleep(600 * 2);
+                        disableAllPrayers();
+                        state = State.BANKING;
                         break;
 
                     case WALK_TO_BOSS:
@@ -212,9 +232,11 @@ public class ScurriusScript extends Script {
                         Rs2Walker.walkTo(bossLocation);
                         String interactionType = config.bossRoomEntryType().getInteractionText();
                         Rs2GameObject.interact(ObjectID.BROKEN_BARS, interactionType);
+                        sleepUntil(this::isInFightRoom);
                         break;
 
                     case WAITING_FOR_BOSS:
+                        attemptLooting(config);
                         if (!hasLoggedRespawnWait) {
                             Microbot.log("Waiting for Scurris to respawn...");
                             hasLoggedRespawnWait = true;
@@ -256,8 +278,7 @@ public class ScurriusScript extends Script {
     }
 
     private boolean isInFightRoom() {
-        net.runelite.api.TileObject object = Rs2GameObject.findObjectById(14206);
-        return object != null;
+        return fightRoom.contains(Rs2Player.getWorldLocation());
     }
 
     private WorldPoint findSafeTile(WorldPoint playerLocation, List<WorldPoint> dangerousWorldPoints) {
@@ -269,7 +290,7 @@ public class ScurriusScript extends Script {
         );
 
         for (WorldPoint tile : nearbyTiles) {
-            if (!dangerousWorldPoints.contains(tile)) {
+            if (!dangerousWorldPoints.contains(tile) && Rs2Tile.isWalkable(Rs2LocalPoint.fromWorldInstance(tile))) {
                 Microbot.log("Found safe tile: " + tile);
                 return tile;
             }

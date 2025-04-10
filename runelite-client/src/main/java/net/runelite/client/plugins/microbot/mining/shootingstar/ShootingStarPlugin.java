@@ -7,6 +7,7 @@ import com.google.inject.Provides;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.GameState;
+import net.runelite.api.WorldType;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -18,10 +19,12 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.breakhandler.BreakHandlerPlugin;
+import net.runelite.client.plugins.microbot.inventorysetups.InventorySetup;
 import net.runelite.client.plugins.microbot.mining.shootingstar.enums.ShootingStarLocation;
 import net.runelite.client.plugins.microbot.mining.shootingstar.model.Star;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.security.Login;
+import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -61,9 +64,9 @@ public class ShootingStarPlugin extends Plugin {
     public List<Star> starList = new ArrayList<>();
     
     @Inject
-    ShootingStarScript shootingStarScript;
+    private ShootingStarScript shootingStarScript;
 
-    public static String version = "1.1.1";
+    public static String version = "1.2.0";
     private String httpEndpoint;
     
     @Getter
@@ -91,6 +94,10 @@ public class ShootingStarPlugin extends Plugin {
     private boolean hideDevOverlay;
     private boolean useNearestHighTierStar;
     private boolean useBreakAtBank;
+    @Getter
+    private boolean useInventorySetups;
+    @Getter
+    private InventorySetup inventorySetup;
     
     @Inject
     private WorldService worldService;
@@ -107,6 +114,7 @@ public class ShootingStarPlugin extends Plugin {
     private ShootingStarPanel panel;
 
     public void fetchStars() {
+        if (!Microbot.isLoggedIn()) return;
         // Create HTTP request to pull in StarData from API
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -120,6 +128,8 @@ public class ShootingStarPlugin extends Plugin {
         List<Star> starData = gson.fromJson(jsonResponse, listType);
 
         ZonedDateTime now = ZonedDateTime.now(utcZoneId);
+
+        boolean inSeasonalWorld = Microbot.getClient().getWorldType().contains(WorldType.SEASONAL);
 
         // Format starData into Star Model
         for (Star star : starData) {
@@ -141,6 +151,13 @@ public class ShootingStarPlugin extends Plugin {
             star.setWorldObject(findWorld(star.getWorld()));
 
             if (star.isGameModeWorld()) continue;
+
+            // Seasonal world filtering
+            if (inSeasonalWorld && !star.isInSeasonalWorld()) {
+                continue; // Skip non-seasonal worlds if the player is in a seasonal world
+            } else if (!inSeasonalWorld && star.isInSeasonalWorld()) {
+                continue; // Skip seasonal worlds if the player is not in a seasonal world
+            }
 
             addToList(star);
         }
@@ -244,6 +261,8 @@ public class ShootingStarPlugin extends Plugin {
         displayAsMinutes = config.isDisplayAsMinutes();
         hideMembersWorlds = !Login.activeProfile.isMember();
         hideF2PWorlds = Login.activeProfile.isMember();
+        useInventorySetups = config.useInventorySetup();
+        inventorySetup = config.inventorySetup();
         useNearestHighTierStar = config.useNearestHighTierStar();
         useBreakAtBank = config.useBreakAtBank();
         hideWildernessLocations = config.isHideWildernessLocations();
@@ -264,7 +283,7 @@ public class ShootingStarPlugin extends Plugin {
 
         startTime = Instant.now();
 
-        shootingStarScript.run(config);
+        shootingStarScript.run();
     }
 
     protected void shutDown() {
@@ -289,6 +308,14 @@ public class ShootingStarPlugin extends Plugin {
             hideWildernessLocations = config.isHideWildernessLocations();
             filterPanelList(hideWildernessLocations);
             updatePanelList(true);
+        }
+
+        if (event.getKey().equals(ShootingStarConfig.useInventorySetups)) {
+            useInventorySetups = config.useInventorySetup();
+        }
+
+        if (event.getKey().equals(ShootingStarConfig.InventorySetup)) {
+            inventorySetup = config.inventorySetup();
         }
 
         if (event.getKey().equals(ShootingStarConfig.useNearestHighTierStar)) {
@@ -412,7 +439,7 @@ public class ShootingStarPlugin extends Plugin {
                 
                 // Set distance to the distance that is found in the map for the duplicate location or calculate shortest distance if not found
                 int distance;
-                distance = Objects.requireNonNullElseGet(existingDistance, () -> Rs2Player.distanceTo(starLocation));
+                distance = Objects.requireNonNullElseGet(existingDistance, () -> Rs2Walker.getTotalTiles(Rs2Player.getWorldLocation(), starLocation));
 
                 distanceMap.computeIfAbsent(distance, k -> new ArrayList<>()).add(star);
             }

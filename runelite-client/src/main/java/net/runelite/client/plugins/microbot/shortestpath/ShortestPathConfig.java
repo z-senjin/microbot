@@ -19,7 +19,7 @@ public interface ShortestPathConfig extends Config {
             name = "Avoid wilderness",
             description = "Whether the wilderness should be avoided if possible<br>" +
                     "(otherwise, will e.g. use wilderness lever from Edgeville to Ardougne)",
-            position = 1,
+            position = 0,
             section = sectionSettings
     )
     default boolean avoidWilderness() {
@@ -31,7 +31,7 @@ public interface ShortestPathConfig extends Config {
             name = "Use agility shortcuts",
             description = "Whether to include agility shortcuts in the path.<br>" +
                     "You must also have the required agility level",
-            position = 2,
+            position = 1,
             section = sectionSettings
     )
     default boolean useAgilityShortcuts() {
@@ -43,7 +43,7 @@ public interface ShortestPathConfig extends Config {
             name = "Use grapple shortcuts",
             description = "Whether to include crossbow grapple agility shortcuts in the path.<br>" +
                     "You must also have the required agility, ranged and strength levels",
-            position = 3,
+            position = 2,
             section = sectionSettings
     )
     default boolean useGrappleShortcuts() {
@@ -55,7 +55,7 @@ public interface ShortestPathConfig extends Config {
             name = "Use boats",
             description = "Whether to include small boats in the path<br>" +
                     "(e.g. the boat to Fishing Platform)",
-            position = 4,
+            position = 3,
             section = sectionSettings
     )
     default boolean useBoats() {
@@ -66,22 +66,22 @@ public interface ShortestPathConfig extends Config {
             keyName = "useCanoes",
             name = "Use canoes",
             description = "Whether to include canoes in the path",
-            position = 5,
+            position = 4,
             section = sectionSettings
     )
     default boolean useCanoes() {
-        return false;
+        return true;
     }
 
     @ConfigItem(
             keyName = "useCharterShips",
             name = "Use charter ships",
             description = "Whether to include charter ships in the path",
-            position = 6,
+            position = 5,
             section = sectionSettings
     )
     default boolean useCharterShips() {
-        return false;
+        return true;
     }
 
     @ConfigItem(
@@ -89,7 +89,7 @@ public interface ShortestPathConfig extends Config {
             name = "Use ships",
             description = "Whether to include passenger ships in the path<br>" +
                     "(e.g. the customs ships to Karamja)",
-            position = 7,
+            position = 6,
             section = sectionSettings
     )
     default boolean useShips() {
@@ -101,7 +101,7 @@ public interface ShortestPathConfig extends Config {
             name = "Use fairy rings",
             description = "Whether to include fairy rings in the path.<br>" +
                     "You must also have completed the required quests or miniquests",
-            position = 8,
+            position = 7,
             section = sectionSettings
     )
     default boolean useFairyRings() {
@@ -112,7 +112,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "useGnomeGliders",
             name = "Use gnome gliders",
             description = "Whether to include gnome gliders in the path",
-            position = 9,
+            position = 8,
             section = sectionSettings
     )
     default boolean useGnomeGliders() {
@@ -124,7 +124,7 @@ public interface ShortestPathConfig extends Config {
             name = "Use minecarts",
             description = "Whether to include minecarts in the path<br>" +
                     "(e.g. the Keldagrim and Lovakengj minecart networks)",
-            position = 10,
+            position = 9,
             section = sectionSettings
     )
     default boolean useMinecarts() {
@@ -135,7 +135,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "useSpiritTrees",
             name = "Use spirit trees",
             description = "Whether to include spirit trees in the path",
-            position = 11,
+            position = 10,
             section = sectionSettings
     )
     default boolean useSpiritTrees() {
@@ -147,9 +147,8 @@ public interface ShortestPathConfig extends Config {
             name = "Use teleportation items",
             description = "Whether to include teleportation items from the player's inventory and equipment.<br>" +
                     "Options labelled (perm) only use permanent non-charge items.",
-            position = 12,
-            section = sectionSettings,
-            hidden = true
+            position = 11,
+            section = sectionSettings
     )
     default TeleportationItem useTeleportationItems() {
         return TeleportationItem.INVENTORY;
@@ -160,7 +159,7 @@ public interface ShortestPathConfig extends Config {
             name = "Use teleportation levers",
             description = "Whether to include teleportation levers in the path<br>" +
                     "(e.g. the lever from Edgeville to Wilderness)",
-            position = 13,
+            position = 12,
             section = sectionSettings
     )
     default boolean useTeleportationLevers() {
@@ -172,7 +171,7 @@ public interface ShortestPathConfig extends Config {
             name = "Use teleportation portals",
             description = "Whether to include teleportation portals in the path<br>" +
                     "(e.g. the portal from Ferox Enclave to Castle Wars)",
-            position = 14,
+            position = 13,
             section = sectionSettings
     )
     default boolean useTeleportationPortals() {
@@ -183,11 +182,23 @@ public interface ShortestPathConfig extends Config {
             keyName = "useTeleportationSpells",
             name = "Use teleportation spells",
             description = "Whether to include teleportation spells in the path",
-            position = 15,
+            position = 14,
             section = sectionSettings
     )
     default boolean useTeleportationSpells() {
         return true;
+    }
+    
+    @ConfigItem(
+            keyName = "useTeleportationMinigames",
+            name = "Use teleportation to minigames",
+            description = "Whether to include teleportation to minigames/activities/grouping in the path<br>" +
+                    "(e.g. the Nightmare Zone minigame teleport). These teleports share a 20 minute cooldown.",
+            position = 15,
+            section = sectionSettings
+    )
+    default boolean useTeleportationMinigames() {
+        return false;
     }
 
     @ConfigItem(
@@ -202,11 +213,44 @@ public interface ShortestPathConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "useNpcs",
+            name = "Use npcs",
+            description = "Whether to include npc transports in the path<br>(e.g. Tree gnome village maze or Lumbridge cellar)",
+            position =  17,
+            section = sectionSettings
+    )
+    default boolean useNpcs() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "useQuetzals",
+            name = "Use quetzals",
+            description = "Whether to include quetzals in the path.<br>",
+            position = 18,
+            section = sectionSettings
+    )
+    default boolean useQuetzals() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "useMagicCarpets",
+            name = "Use Magic Carpets",
+            description = "Whether to include magic carpets in the path.<br>",
+            position = 19,
+            section = sectionSettings
+    )
+    default boolean useMagicCarpets() {
+        return true;
+    }
+
+    @ConfigItem(
             keyName = "cancelInstead",
             name = "Cancel instead of recalculating",
             description = "Whether the path should be cancelled rather than recalculated " +
                     "when the recalculate distance limit is exceeded",
-            position = 17,
+            position = 20,
             section = sectionSettings
     )
     default boolean cancelInstead() {
@@ -214,11 +258,22 @@ public interface ShortestPathConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "showTransportInfo",
+            name = "Show transport info",
+            description = "Whether to display transport destination hint info, e.g. which chat option and text to click",
+            position = 21,
+            section = sectionSettings
+    )
+    default boolean showTransportInfo() {
+        return true;
+    }
+
+    @ConfigItem(
             keyName = "distanceBeforeUsingTeleports",
             name = "Teleport distance",
             description = "Distance before using a teleport<br>" +
                     "(This is to avoid using teleports when you are to close",
-            position = 14,
+            position = 22,
             section = sectionSettings
     )
     default int distanceBeforeUsingTeleport() {
@@ -233,7 +288,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "recalculateDistance",
             name = "Recalculate distance",
             description = "Distance from the path the player should be for it to be recalculated (-1 for never)",
-            position = 18,
+            position = 23,
             section = sectionSettings
     )
     default int recalculateDistance() {
@@ -248,7 +303,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "finishDistance",
             name = "Finish distance",
             description = "Distance from the target tile at which the path should be ended (-1 for never)",
-            position = 19,
+            position = 24,
             section = sectionSettings
     )
     default int reachedDistance() {
@@ -259,18 +314,18 @@ public interface ShortestPathConfig extends Config {
             keyName = "showTileCounter",
             name = "Show tile counter",
             description = "Whether to display the number of tiles travelled, number of tiles remaining or disable counting",
-            position = 20,
+            position = 25,
             section = sectionSettings
     )
     default TileCounter showTileCounter() {
-        return TileCounter.DISABLED;
+        return TileCounter.REMAINING;
     }
 
     @ConfigItem(
             keyName = "tileCounterStep",
             name = "Tile counter step",
             description = "The number of tiles between the displayed tile counter numbers",
-            position = 21,
+            position = 26,
             section = sectionSettings
     )
     default int tileCounterStep()
@@ -290,7 +345,7 @@ public interface ShortestPathConfig extends Config {
             name = "Calculation cutoff",
             description = "The cutoff threshold in number of ticks (0.6 seconds) of no progress being<br>" +
                     "made towards the path target before the calculation will be stopped",
-            position = 22,
+            position = 27,
             section = sectionSettings
     )
     default int calculationCutoff()
@@ -298,32 +353,10 @@ public interface ShortestPathConfig extends Config {
         return 5;
     }
 
-    @ConfigItem(
-            keyName = "showTransportInfo",
-            name = "Show transport info",
-            description = "Whether to display transport destination hint info, e.g. which chat option and text to click",
-            position = 23,
-            section = sectionSettings
-    )
-    default boolean showTransportInfo() {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "useNpcs",
-            name = "Use npcs",
-            description = "Whether to include npc transports in the path<br>(e.g. Tree gnome village maze or Lumbridge cellar)",
-            position = 24,
-            section = sectionSettings
-    )
-    default boolean useNpcs() {
-        return true;
-    }
-
     @ConfigSection(
             name = "Display",
             description = "Options for displaying the path on the world map, minimap and scene tiles",
-            position = 24
+            position = 1
     )
     String sectionDisplay = "sectionDisplay";
 
@@ -331,7 +364,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "drawMap",
             name = "Draw path on world map",
             description = "Whether the path should be drawn on the world map",
-            position = 25,
+            position = 0,
             section = sectionDisplay
     )
     default boolean drawMap() {
@@ -342,7 +375,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "drawMinimap",
             name = "Draw path on minimap",
             description = "Whether the path should be drawn on the minimap",
-            position = 26,
+            position = 1,
             section = sectionDisplay
     )
     default boolean drawMinimap() {
@@ -353,7 +386,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "drawTiles",
             name = "Draw path on tiles",
             description = "Whether the path should be drawn on the game tiles",
-            position = 27,
+            position = 2,
             section = sectionDisplay
     )
     default boolean drawTiles() {
@@ -364,17 +397,39 @@ public interface ShortestPathConfig extends Config {
             keyName = "pathStyle",
             name = "Path style",
             description = "Whether to display the path as tiles or a segmented line",
-            position = 28,
+            position = 3,
             section = sectionDisplay
     )
     default TileStyle pathStyle() {
         return TileStyle.TILES;
     }
 
+    @ConfigItem(
+            keyName = "showETA",
+            name = "Show ETA Overlay",
+            description = "Whether to display the ETA in an overlay to your destination",
+            position = 4,
+            section = sectionDisplay
+    )
+    default boolean showETA() {
+        return false;
+    }
+
+    @ConfigItem(
+            keyName = "showETAInSeconds",
+            name = "Show ETA in Seconds",
+            description = "Whether to display the ETA in seconds vs mins:seconds",
+            position = 5,
+            section = sectionDisplay
+    )
+    default boolean showInSeconds() {
+        return false;
+    }
+
     @ConfigSection(
             name = "Colours",
             description = "Colours for the path map, minimap and scene tiles",
-            position = 29
+            position = 2
     )
     String sectionColours = "sectionColours";
 
@@ -383,7 +438,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "colourPath",
             name = "Path",
             description = "Colour of the path tiles on the world map, minimap and in the game scene",
-            position = 30,
+            position = 0,
             section = sectionColours
     )
     default Color colourPath() {
@@ -395,7 +450,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "colourPathCalculating",
             name = "Calculating",
             description = "Colour of the path tiles while the pathfinding calculation is in progress",
-            position = 31,
+            position = 1,
             section = sectionColours
     )
     default Color colourPathCalculating() {
@@ -407,7 +462,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "colourTransports",
             name = "Transports",
             description = "Colour of the transport tiles",
-            position = 32,
+            position = 2,
             section = sectionColours
     )
     default Color colourTransports() {
@@ -419,7 +474,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "colourCollisionMap",
             name = "Collision map",
             description = "Colour of the collision map tiles",
-            position = 33,
+            position = 3,
             section = sectionColours
     )
     default Color colourCollisionMap() {
@@ -431,7 +486,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "colourText",
             name = "Text",
             description = "Colour of the text of the tile counter and fairy ring codes",
-            position = 34,
+            position = 4,
             section = sectionColours
     )
     default Color colourText() {
@@ -441,7 +496,7 @@ public interface ShortestPathConfig extends Config {
     @ConfigSection(
             name = "Debug Options",
             description = "Various options for debugging",
-            position = 35,
+            position = 3,
             closedByDefault = true
     )
     String sectionDebug = "sectionDebug";
@@ -450,7 +505,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "drawTransports",
             name = "Draw transports",
             description = "Whether transports should be drawn",
-            position = 36,
+            position = 0,
             section = sectionDebug
     )
     default boolean drawTransports() {
@@ -461,7 +516,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "drawCollisionMap",
             name = "Draw collision map",
             description = "Whether the collision map should be drawn",
-            position = 37,
+            position = 1,
             section = sectionDebug
     )
     default boolean drawCollisionMap() {
@@ -472,7 +527,7 @@ public interface ShortestPathConfig extends Config {
             keyName = "drawDebugPanel",
             name = "Show debug panel",
             description = "Toggles displaying the pathfinding debug stats panel",
-            position = 38,
+            position = 2,
             section = sectionDebug
     )
     default boolean drawDebugPanel() {

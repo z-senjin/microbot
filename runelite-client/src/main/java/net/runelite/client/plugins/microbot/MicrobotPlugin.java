@@ -9,6 +9,7 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.ProfileManager;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
@@ -19,12 +20,15 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginInstantiationException;
 import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.plugins.microbot.qualityoflife.scripts.pouch.PouchOverlay;
 import net.runelite.client.plugins.microbot.qualityoflife.scripts.pouch.PouchScript;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
+import net.runelite.client.plugins.microbot.util.inventory.Rs2Gembag;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.mouse.VirtualMouse;
 import net.runelite.client.plugins.microbot.util.mouse.naturalmouse.NaturalMouse;
+import net.runelite.client.plugins.microbot.util.overlay.GembagOverlay;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.reflection.Rs2Reflection;
 import net.runelite.client.plugins.microbot.util.shop.Rs2Shop;
@@ -32,6 +36,7 @@ import net.runelite.client.plugins.microbot.util.tile.Rs2Tile;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
+import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 import net.runelite.client.ui.overlay.worldmap.WorldMapOverlay;
 import net.runelite.client.ui.overlay.worldmap.WorldMapPointManager;
 
@@ -39,6 +44,7 @@ import javax.inject.Inject;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
 
 @PluginDescriptor(
         name = PluginDescriptor.Default + "Microbot",
@@ -66,13 +72,19 @@ public class MicrobotPlugin extends Plugin {
     @Inject
     PluginManager pluginManager;
     @Inject
+    TooltipManager toolTipManager;
+    @Inject
     private Client client;
     @Inject
     private ClientThread clientThread;
     @Inject
+    private EventBus eventBus;
+    @Inject
     private ClientToolbar clientToolbar;
     @Inject
     private MicrobotOverlay microbotOverlay;
+    @Inject
+    private GembagOverlay gembagOverlay;
     @Inject
     private OverlayManager overlayManager;
     @Inject
@@ -87,12 +99,15 @@ public class MicrobotPlugin extends Plugin {
     private NaturalMouse naturalMouse;
     @Inject
     private PouchScript pouchScript;
+    @Inject
+    private PouchOverlay pouchOverlay;
 
     @Override
     protected void startUp() throws AWTException {
         Microbot.pauseAllScripts = false;
         Microbot.setClient(client);
         Microbot.setClientThread(clientThread);
+        Microbot.setEventBus(eventBus);
         Microbot.setNotifier(notifier);
         Microbot.setWorldService(worldService);
         Microbot.setProfileManager(profileManager);
@@ -106,12 +121,17 @@ public class MicrobotPlugin extends Plugin {
         Microbot.setInfoBoxManager(infoBoxManager);
         Microbot.setWorldMapPointManager(worldMapPointManager);
         Microbot.setChatMessageManager(chatMessageManager);
+        Microbot.setConfigManager(configManager);
+        Microbot.setTooltipManager(toolTipManager);
         if (overlayManager != null) {
             overlayManager.add(microbotOverlay);
+            overlayManager.add(gembagOverlay);
         }
 
         Microbot.setPouchScript(pouchScript);
         pouchScript.startUp();
+        overlayManager.add(pouchOverlay);
+
 
         new InputSelector(clientToolbar);
     }
@@ -142,19 +162,21 @@ public class MicrobotPlugin extends Plugin {
 
     @Subscribe
     public void onGameStateChanged(GameStateChanged gameStateChanged) {
-        if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.CONNECTION_LOST) {
-            if (Rs2Bank.bankItems != null)
-                Rs2Bank.bankItems.clear();
+        if (gameStateChanged.getGameState() == GameState.LOGGED_IN) {
+            Microbot.setLoginTime(Instant.now());
         }
-    }
-
-    @Subscribe
-    public void onMenuOpened(MenuOpened event) {
+        if (gameStateChanged.getGameState() == GameState.HOPPING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.CONNECTION_LOST) {
+            if (Rs2Bank.bankItems != null) {
+                Rs2Bank.bankItems.clear();
+            }
+            Microbot.loggedIn = false;
+        }
     }
 
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         Rs2Player.handlePotionTimers(event);
+        Rs2Player.handleTeleblockTimer(event);
     }
     
     @Subscribe
@@ -193,6 +215,7 @@ public class MicrobotPlugin extends Plugin {
     @Subscribe
     private void onMenuOptionClicked(MenuOptionClicked event) {
         Microbot.getPouchScript().onMenuOptionClicked(event);
+        Rs2Gembag.onMenuOptionClicked(event);
         Microbot.targetMenu = null;
         System.out.println(event.getMenuEntry());
     }
@@ -206,6 +229,7 @@ public class MicrobotPlugin extends Plugin {
             Microbot.cantHopWorld = true;
         }
         Microbot.getPouchScript().onChatMessage(event);
+        Rs2Gembag.onChatMessage(event);
     }
 
     @SneakyThrows
@@ -240,6 +264,30 @@ public class MicrobotPlugin extends Plugin {
                 Microbot.getPouchScript().startUp();
             } else {
                 Microbot.getPouchScript().shutdown();
+            }
+        }
+    }
+
+    @Subscribe
+    public void onHitsplatApplied(HitsplatApplied event) {
+        // Case 1: Hitsplat applied to the local player (indicates someone or something is attacking you)
+        if (event.getActor().equals(Microbot.getClient().getLocalPlayer())) {
+            if (!event.getHitsplat().isOthers()) {
+                Rs2Player.updateCombatTime();
+            }
+        }
+
+        // Case 2: Hitsplat is applied to another player (indicates you are attacking another player)
+        else if (event.getActor() instanceof Player) {
+            if (event.getHitsplat().isMine()) {
+                Rs2Player.updateCombatTime();
+            }
+        }
+
+        // Case 3: Hitsplat is applied to an NPC (indicates you are attacking an NPC)
+        else if (event.getActor() instanceof NPC) {
+            if (event.getHitsplat().isMine()) {
+                Rs2Player.updateCombatTime();
             }
         }
     }

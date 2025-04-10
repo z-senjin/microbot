@@ -29,7 +29,7 @@
 	<parent>
 		<groupId>net.runelite</groupId>
 		<artifactId>runelite-parent</artifactId>
-		<version>1.10.43-SNAPSHOT</version>
+		<version>1.11.6-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>client</artifactId>
@@ -41,7 +41,7 @@
 		<git.commit.id.abbrev>nogit</git.commit.id.abbrev>
 		<git.dirty>false</git.dirty>
 		<shade.skip>false</shade.skip>
-		<microbot.version>1.6.0</microbot.version>
+		<microbot.version>1.8.4</microbot.version>
 	</properties>
 
 	<dependencies>
@@ -330,6 +330,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>3.14.9</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>mockwebserver</artifactId>
 			<version>3.14.9</version>
 			<scope>test</scope>
@@ -362,6 +368,13 @@
 					<exclude>logback.xml</exclude>
 				</excludes>
 				<filtering>true</filtering>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>logback.xml</include>
+				</includes>
+				<filtering>false</filtering>
 			</resource>
 		</resources>
 		<plugins>
@@ -444,6 +457,35 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.2.0</version>
+				<executions>
+					<execution>
+						<id>build-plugin-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classesDirectory>${project.build.outputDirectory}</classesDirectory>
+							<includes>
+								<include>net/runelite/client/plugins/microbot/example/**</include>
+							</includes>
+							<finalName>example</finalName>
+							<archive>
+								<manifest>
+									<addClasspath>true</addClasspath>
+									<classpathPrefix>lib/</classpathPrefix>
+									<mainClass>net.runelite.client.RuneLite</mainClass>
+								</manifest>
+							</archive>
+							<classifier>plugin</classifier>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jarsigner-plugin</artifactId>
 				<version>1.4</version>
 				<executions>
@@ -475,6 +517,7 @@
 						<configuration>
 							<scriptDirectory>src/main/scripts</scriptDirectory>
 							<outputDirectory>${project.build.outputDirectory}/runelite</outputDirectory>
+							<componentsFile>../runelite-api/src/main/interfaces/interfaces.toml</componentsFile>
 						</configuration>
 					</execution>
 					<execution>

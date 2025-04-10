@@ -84,15 +84,10 @@ public class Pathfinder implements Runnable {
         return path;
     }
 
-    private Node addNeighbors(Node node) {
+    private void addNeighbors(Node node) {
         List<Node> nodes = map.getNeighbors(node, visited, config, target);
-        for (int i = 0; i < nodes.size(); ++i) {
-            Node neighbor = nodes.get(i);
-            if (neighbor.packedPosition == targetPacked) {
-                return neighbor;
-            }
-
-            if (config.isAvoidWilderness() && config.avoidWilderness(node.packedPosition, neighbor.packedPosition, targetInWilderness)) {
+        for (Node neighbor : nodes) {
+            if (config.avoidWilderness(node.packedPosition, neighbor.packedPosition, targetInWilderness)) {
                 continue;
             }
 
@@ -105,8 +100,6 @@ public class Pathfinder implements Runnable {
                 ++stats.nodesChecked;
             }
         }
-
-        return null;
     }
 
     @Override
@@ -122,15 +115,14 @@ public class Pathfinder implements Runnable {
         while (!cancelled && (!boundary.isEmpty() || !pending.isEmpty())) {
             Node node = boundary.peekFirst();
             Node p = pending.peek();
-
+            
             if (p != null && (node == null || p.cost < node.cost)) {
-                boundary.addFirst(p);
-                pending.poll();
+                node = pending.poll();
+            } else {
+                node = boundary.removeFirst();
             }
 
-            node = boundary.removeFirst();
-
-            if (wildernessLevel > 20) {
+            if (wildernessLevel > 0) {
                 // We don't need to remove teleports when going from 20 to 21 or higher,
                 // because the teleport is either used at the very start of the
                 // path or when going from 31 or higher to 30, or from 21 or higher to 20.
@@ -139,12 +131,16 @@ public class Pathfinder implements Runnable {
 
                 // These are overlapping boundaries, so if the node isn't in level 30, it's in 0-29
                 // likewise, if the node isn't in level 20, it's in 0-19
-                if (wildernessLevel > 30 && !config.isInLevel30Wilderness(node.packedPosition)) {
-                    wildernessLevel = 30;
+                if (wildernessLevel > 29 && !config.isInLevel29Wilderness(node.packedPosition)) {
+                    wildernessLevel = 29;
                     update = true;
                 }
-                if (wildernessLevel > 20 && !config.isInLevel20Wilderness(node.packedPosition)) {
-                    wildernessLevel = 20;
+                if (wildernessLevel > 19 && !config.isInLevel19Wilderness(node.packedPosition)) {
+                    wildernessLevel = 19;
+                    update = true;
+                }
+                if (wildernessLevel > 0 && !config.isInWilderness(node.packedPosition)) {
+                    wildernessLevel = 0;
                     update = true;
                 }
                 if (update) {
@@ -173,13 +169,8 @@ public class Pathfinder implements Runnable {
             if (System.currentTimeMillis() > cutoffTimeMillis) {
                 break;
             }
-
-            // Check if target was found without processing the queue to find it
-            if ((p = addNeighbors(node)) != null) {
-                bestLastNode = p;
-                pathNeedsUpdate = true;
-                break;
-            }
+            
+            addNeighbors(node);
         }
 
         done = !cancelled;

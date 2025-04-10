@@ -27,12 +27,10 @@
 package net.runelite.client.plugins.menuentryswapper;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import static com.google.common.base.Predicates.alwaysTrue;
 import static com.google.common.base.Predicates.equalTo;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
@@ -46,13 +44,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.ItemComposition;
-import net.runelite.api.ItemID;
 import net.runelite.api.KeyCode;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuAction;
@@ -61,13 +57,11 @@ import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.ParamID;
-import net.runelite.api.annotations.Component;
 import net.runelite.api.events.ClientTick;
-import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.PostMenuSort;
-import net.runelite.api.widgets.ComponentID;
-import net.runelite.api.widgets.InterfaceID;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetConfig;
 import net.runelite.api.widgets.WidgetUtil;
@@ -140,6 +134,57 @@ public class MenuEntrySwapperPlugin extends Plugin
 		"first mate peri"
 	);
 
+	private static final int[][] EQUIPMENT_SUBOP_PARAMS = {
+		{
+			ParamID.OC_ITEM_OP1_SUBOP1, ParamID.OC_ITEM_OP1_SUBOP2, ParamID.OC_ITEM_OP1_SUBOP3, ParamID.OC_ITEM_OP1_SUBOP4, ParamID.OC_ITEM_OP1_SUBOP5,
+			ParamID.OC_ITEM_OP1_SUBOP6, ParamID.OC_ITEM_OP1_SUBOP7, ParamID.OC_ITEM_OP1_SUBOP8, ParamID.OC_ITEM_OP1_SUBOP9, ParamID.OC_ITEM_OP1_SUBOP10,
+			ParamID.OC_ITEM_OP1_SUBOP11, ParamID.OC_ITEM_OP1_SUBOP12, ParamID.OC_ITEM_OP1_SUBOP13, ParamID.OC_ITEM_OP1_SUBOP14, ParamID.OC_ITEM_OP1_SUBOP15,
+			ParamID.OC_ITEM_OP1_SUBOP16, ParamID.OC_ITEM_OP1_SUBOP17, ParamID.OC_ITEM_OP1_SUBOP18, ParamID.OC_ITEM_OP1_SUBOP19, ParamID.OC_ITEM_OP1_SUBOP20
+		},
+		{
+			ParamID.OC_ITEM_OP2_SUBOP1, ParamID.OC_ITEM_OP2_SUBOP2, ParamID.OC_ITEM_OP2_SUBOP3, ParamID.OC_ITEM_OP2_SUBOP4, ParamID.OC_ITEM_OP2_SUBOP5,
+			ParamID.OC_ITEM_OP2_SUBOP6, ParamID.OC_ITEM_OP2_SUBOP7, ParamID.OC_ITEM_OP2_SUBOP8, ParamID.OC_ITEM_OP2_SUBOP9, ParamID.OC_ITEM_OP2_SUBOP10,
+			ParamID.OC_ITEM_OP2_SUBOP11, ParamID.OC_ITEM_OP2_SUBOP12, ParamID.OC_ITEM_OP2_SUBOP13, ParamID.OC_ITEM_OP2_SUBOP14, ParamID.OC_ITEM_OP2_SUBOP15,
+			ParamID.OC_ITEM_OP2_SUBOP16, ParamID.OC_ITEM_OP2_SUBOP17, ParamID.OC_ITEM_OP2_SUBOP18, ParamID.OC_ITEM_OP2_SUBOP19, ParamID.OC_ITEM_OP2_SUBOP20
+		},
+		{
+			ParamID.OC_ITEM_OP3_SUBOP1, ParamID.OC_ITEM_OP3_SUBOP2, ParamID.OC_ITEM_OP3_SUBOP3, ParamID.OC_ITEM_OP3_SUBOP4, ParamID.OC_ITEM_OP3_SUBOP5,
+			ParamID.OC_ITEM_OP3_SUBOP6, ParamID.OC_ITEM_OP3_SUBOP7, ParamID.OC_ITEM_OP3_SUBOP8, ParamID.OC_ITEM_OP3_SUBOP9, ParamID.OC_ITEM_OP3_SUBOP10,
+			ParamID.OC_ITEM_OP3_SUBOP11, ParamID.OC_ITEM_OP3_SUBOP12, ParamID.OC_ITEM_OP3_SUBOP13, ParamID.OC_ITEM_OP3_SUBOP14, ParamID.OC_ITEM_OP3_SUBOP15,
+			ParamID.OC_ITEM_OP3_SUBOP16, ParamID.OC_ITEM_OP3_SUBOP17, ParamID.OC_ITEM_OP3_SUBOP18, ParamID.OC_ITEM_OP3_SUBOP19, ParamID.OC_ITEM_OP3_SUBOP20
+		},
+		{
+			ParamID.OC_ITEM_OP4_SUBOP1, ParamID.OC_ITEM_OP4_SUBOP2, ParamID.OC_ITEM_OP4_SUBOP3, ParamID.OC_ITEM_OP4_SUBOP4, ParamID.OC_ITEM_OP4_SUBOP5,
+			ParamID.OC_ITEM_OP4_SUBOP6, ParamID.OC_ITEM_OP4_SUBOP7, ParamID.OC_ITEM_OP4_SUBOP8, ParamID.OC_ITEM_OP4_SUBOP9, ParamID.OC_ITEM_OP4_SUBOP10,
+			ParamID.OC_ITEM_OP4_SUBOP11, ParamID.OC_ITEM_OP4_SUBOP12, ParamID.OC_ITEM_OP4_SUBOP13, ParamID.OC_ITEM_OP4_SUBOP14, ParamID.OC_ITEM_OP4_SUBOP15,
+			ParamID.OC_ITEM_OP4_SUBOP16, ParamID.OC_ITEM_OP4_SUBOP17, ParamID.OC_ITEM_OP4_SUBOP18, ParamID.OC_ITEM_OP4_SUBOP19, ParamID.OC_ITEM_OP4_SUBOP20
+		},
+		{
+			ParamID.OC_ITEM_OP5_SUBOP1, ParamID.OC_ITEM_OP5_SUBOP2, ParamID.OC_ITEM_OP5_SUBOP3, ParamID.OC_ITEM_OP5_SUBOP4, ParamID.OC_ITEM_OP5_SUBOP5,
+			ParamID.OC_ITEM_OP5_SUBOP6, ParamID.OC_ITEM_OP5_SUBOP7, ParamID.OC_ITEM_OP5_SUBOP8, ParamID.OC_ITEM_OP5_SUBOP9, ParamID.OC_ITEM_OP5_SUBOP10,
+			ParamID.OC_ITEM_OP5_SUBOP11, ParamID.OC_ITEM_OP5_SUBOP12, ParamID.OC_ITEM_OP5_SUBOP13, ParamID.OC_ITEM_OP5_SUBOP14, ParamID.OC_ITEM_OP5_SUBOP15,
+			ParamID.OC_ITEM_OP5_SUBOP16, ParamID.OC_ITEM_OP5_SUBOP17, ParamID.OC_ITEM_OP5_SUBOP18, ParamID.OC_ITEM_OP5_SUBOP19, ParamID.OC_ITEM_OP5_SUBOP20
+		},
+		{
+			ParamID.OC_ITEM_OP6_SUBOP1, ParamID.OC_ITEM_OP6_SUBOP2, ParamID.OC_ITEM_OP6_SUBOP3, ParamID.OC_ITEM_OP6_SUBOP4, ParamID.OC_ITEM_OP6_SUBOP5,
+			ParamID.OC_ITEM_OP6_SUBOP6, ParamID.OC_ITEM_OP6_SUBOP7, ParamID.OC_ITEM_OP6_SUBOP8, ParamID.OC_ITEM_OP6_SUBOP9, ParamID.OC_ITEM_OP6_SUBOP10,
+			ParamID.OC_ITEM_OP6_SUBOP11, ParamID.OC_ITEM_OP6_SUBOP12, ParamID.OC_ITEM_OP6_SUBOP13, ParamID.OC_ITEM_OP6_SUBOP14, ParamID.OC_ITEM_OP6_SUBOP15,
+			ParamID.OC_ITEM_OP6_SUBOP16, ParamID.OC_ITEM_OP6_SUBOP17, ParamID.OC_ITEM_OP6_SUBOP18, ParamID.OC_ITEM_OP6_SUBOP19, ParamID.OC_ITEM_OP6_SUBOP20
+		},
+		{
+			ParamID.OC_ITEM_OP7_SUBOP1, ParamID.OC_ITEM_OP7_SUBOP2, ParamID.OC_ITEM_OP7_SUBOP3, ParamID.OC_ITEM_OP7_SUBOP4, ParamID.OC_ITEM_OP7_SUBOP5,
+			ParamID.OC_ITEM_OP7_SUBOP6, ParamID.OC_ITEM_OP7_SUBOP7, ParamID.OC_ITEM_OP7_SUBOP8, ParamID.OC_ITEM_OP7_SUBOP9, ParamID.OC_ITEM_OP7_SUBOP10,
+			ParamID.OC_ITEM_OP7_SUBOP11, ParamID.OC_ITEM_OP7_SUBOP12, ParamID.OC_ITEM_OP7_SUBOP13, ParamID.OC_ITEM_OP7_SUBOP14, ParamID.OC_ITEM_OP7_SUBOP15,
+			ParamID.OC_ITEM_OP7_SUBOP16, ParamID.OC_ITEM_OP7_SUBOP17, ParamID.OC_ITEM_OP7_SUBOP18, ParamID.OC_ITEM_OP7_SUBOP19, ParamID.OC_ITEM_OP7_SUBOP20
+		},
+		{
+			ParamID.OC_ITEM_OP8_SUBOP1, ParamID.OC_ITEM_OP8_SUBOP2, ParamID.OC_ITEM_OP8_SUBOP3, ParamID.OC_ITEM_OP8_SUBOP4, ParamID.OC_ITEM_OP8_SUBOP5,
+			ParamID.OC_ITEM_OP8_SUBOP6, ParamID.OC_ITEM_OP8_SUBOP7, ParamID.OC_ITEM_OP8_SUBOP8, ParamID.OC_ITEM_OP8_SUBOP9, ParamID.OC_ITEM_OP8_SUBOP10,
+			ParamID.OC_ITEM_OP8_SUBOP11, ParamID.OC_ITEM_OP8_SUBOP12, ParamID.OC_ITEM_OP8_SUBOP13, ParamID.OC_ITEM_OP8_SUBOP14, ParamID.OC_ITEM_OP8_SUBOP15,
+			ParamID.OC_ITEM_OP8_SUBOP16, ParamID.OC_ITEM_OP8_SUBOP17, ParamID.OC_ITEM_OP8_SUBOP18, ParamID.OC_ITEM_OP8_SUBOP19, ParamID.OC_ITEM_OP8_SUBOP20
+		}
+	};
+
 	@Inject
 	private Client client;
 
@@ -164,7 +209,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 	private final Multimap<String, Swap> swaps = LinkedHashMultimap.create();
 	private final ArrayListMultimap<String, Integer> cacheOptionIndexes = ArrayListMultimap.create();
 	private Menu cacheOptionMenu;
-	private final Multimap<Integer, TeleportSwap> teleportSwaps = HashMultimap.create();
 	private boolean lastShift, curShift;
 
 	@Provides
@@ -177,7 +221,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 	public void startUp()
 	{
 		setupSwaps();
-		setupTeleportSwaps();
 		removeOldSwaps();
 	}
 
@@ -185,7 +228,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 	public void shutDown()
 	{
 		swaps.clear();
-		teleportSwaps.clear();
 	}
 
 	@VisibleForTesting
@@ -509,11 +551,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 					(shiftSwapConfig == -1 ? MenuAction.WALK : OBJECT_MENU_TYPES.get(shiftSwapConfig));
 
 				MenuEntry swapLeftClick = client.createMenuEntry(idx)
-					.setOption("Swap left click")
+					.setOption("Swap left-click")
 					.setTarget(entry.getTarget())
 					.setType(MenuAction.RUNELITE);
 				MenuEntry swapShiftClick = client.createMenuEntry(idx)
-					.setOption("Swap shift click")
+					.setOption("Swap shift-click")
 					.setTarget(entry.getTarget())
 					.setType(MenuAction.RUNELITE);
 				Menu subLeft = swapLeftClick.createSubMenu();
@@ -699,11 +741,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 					(shiftSwapConfig == -1 ? MenuAction.WALK : NPC_MENU_TYPES.get(shiftSwapConfig));
 
 				MenuEntry swapLeftClick = client.createMenuEntry(idx)
-					.setOption("Swap left click")
+					.setOption("Swap left-click")
 					.setTarget(entry.getTarget())
 					.setType(MenuAction.RUNELITE);
 				MenuEntry swapShiftClick = client.createMenuEntry(idx)
-					.setOption("Swap shift click")
+					.setOption("Swap shift-click")
 					.setTarget(entry.getTarget())
 					.setType(MenuAction.RUNELITE);
 				Menu subLeft = swapLeftClick.createSubMenu();
@@ -827,7 +869,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 			final MenuEntry entry = entries[idx];
 			Widget w = entry.getWidget();
 
-			if (w != null && WidgetUtil.componentToInterface(w.getId()) == InterfaceID.EQUIPMENT
+			if (w != null && WidgetUtil.componentToInterface(w.getId()) == InterfaceID.WORNITEMS
 				&& "Examine".equals(entry.getOption()) && entry.getIdentifier() == 10)
 			{
 				w = w.getChild(1);
@@ -838,62 +880,61 @@ public class MenuEntrySwapperPlugin extends Plugin
 					final Integer shiftClickOp = getWornItemSwapConfig(true, itemComposition.getId());
 
 					MenuEntry swapLeftClick = client.createMenuEntry(idx)
-						.setOption("Swap left click")
+						.setOption("Swap left-click")
 						.setTarget(entry.getTarget())
 						.setType(MenuAction.RUNELITE);
 					MenuEntry swapShiftClick = client.createMenuEntry(idx)
-						.setOption("Swap shift click")
+						.setOption("Swap shift-click")
 						.setTarget(entry.getTarget())
 						.setType(MenuAction.RUNELITE);
 					Menu subLeft = swapLeftClick.createSubMenu();
 					Menu subShift = swapShiftClick.createSubMenu();
 
-					for (int paramId = ParamID.OC_ITEM_OP1, opId = 2; paramId <= ParamID.OC_ITEM_OP8; ++paramId, ++opId)
+					for (int paramId = ParamID.OC_ITEM_OP1, componentOpId = 2, itemOpId = 1; paramId <= ParamID.OC_ITEM_OP8; ++paramId, ++componentOpId, ++itemOpId)
 					{
 						final String opName = itemComposition.getStringValue(paramId);
-						if (!Strings.isNullOrEmpty(opName))
+						if (Strings.isNullOrEmpty(opName))
 						{
-							if (leftClickOp == null || leftClickOp != opId)
+							continue;
+						}
+
+						if (leftClickOp == null || leftClickOp != componentOpId)
+						{
+							subLeft.createMenuEntry(0)
+								.setOption(opName)
+								.setType(MenuAction.RUNELITE)
+								.onClick(wornItemConsumer(itemComposition, opName, componentOpId, false));
+						}
+						if (shiftClickOp == null || shiftClickOp != componentOpId)
+						{
+							subShift.createMenuEntry(0)
+								.setOption(opName)
+								.setType(MenuAction.RUNELITE)
+								.onClick(wornItemConsumer(itemComposition, opName, componentOpId, true));
+						}
+
+						int[] subopParams = EQUIPMENT_SUBOP_PARAMS[itemOpId - 1];
+						for (int subopParam : subopParams)
+						{
+							String subop = itemComposition.getStringValue(subopParam);
+							if (Strings.isNullOrEmpty(subop))
+							{
+								continue;
+							}
+
+							if (leftClickOp == null || leftClickOp != subop.hashCode())
 							{
 								subLeft.createMenuEntry(0)
-									.setOption(opName)
+									.setOption(subop)
 									.setType(MenuAction.RUNELITE)
-									.onClick(wornItemConsumer(itemComposition, opName, opId, false));
+									.onClick(wornItemConsumer(itemComposition, subop, subop.hashCode(), false));
 							}
-							if (shiftClickOp == null || shiftClickOp != opId)
+							if (shiftClickOp == null || shiftClickOp != subop.hashCode())
 							{
 								subShift.createMenuEntry(0)
-									.setOption(opName)
+									.setOption(subop)
 									.setType(MenuAction.RUNELITE)
-									.onClick(wornItemConsumer(itemComposition, opName, opId, true));
-							}
-						}
-					}
-
-					if (config.teleportSubmenus())
-					{
-						var subSwaps = teleportSwaps.get(itemComposition.getId())
-							.stream()
-							.filter(ts -> ts.worn)
-							.collect(Collectors.toList());
-						for (TeleportSwap top : subSwaps)
-						{
-							for (TeleportSub sub : top.subs)
-							{
-								if (leftClickOp == null || leftClickOp != sub.option.hashCode())
-								{
-									subLeft.createMenuEntry(idx)
-										.setOption(sub.option)
-										.setType(MenuAction.RUNELITE)
-										.onClick(wornItemConsumer(itemComposition, sub.option, sub.option.hashCode(), false));
-								}
-								if (shiftClickOp == null || shiftClickOp != sub.option.hashCode())
-								{
-									subShift.createMenuEntry(idx)
-										.setOption(sub.option)
-										.setType(MenuAction.RUNELITE)
-										.onClick(wornItemConsumer(itemComposition, sub.option, sub.option.hashCode(), true));
-								}
+									.onClick(wornItemConsumer(itemComposition, subop, subop.hashCode(), true));
 							}
 						}
 					}
@@ -906,7 +947,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 							.onClick(e ->
 							{
 								final String message = new ChatMessageBuilder()
-									.append("The default worn left click option for '").append(itemComposition.getMembersName()).append("' ")
+									.append("The default worn left-click option for '").append(itemComposition.getMembersName()).append("' ")
 									.append("has been reset.")
 									.build();
 
@@ -927,7 +968,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 							.onClick(e ->
 							{
 								final String message = new ChatMessageBuilder()
-									.append("The default worn shift click option for '").append(itemComposition.getMembersName()).append("' ")
+									.append("The default worn shift-click option for '").append(itemComposition.getMembersName()).append("' ")
 									.append("has been reset.")
 									.build();
 
@@ -983,17 +1024,18 @@ public class MenuEntrySwapperPlugin extends Plugin
 			{
 				final ItemComposition itemComposition = itemManager.getItemComposition(entry.getItemId());
 				final String[] actions = itemComposition.getInventoryActions();
+				final String[][] subops = itemComposition.getSubops();
 				final Integer leftClickOp = getItemSwapConfig(false, itemComposition.getId());
 				final Integer shiftClickOp = getItemSwapConfig(true, itemComposition.getId());
 				final int defaultLeftClickOp = defaultOp(itemComposition, false);
 				final int defaultShiftClickOp = defaultOp(itemComposition, true);
 
 				MenuEntry swapLeftClick = client.createMenuEntry(idx)
-					.setOption("Swap left click")
+					.setOption("Swap left-click")
 					.setTarget(entry.getTarget())
 					.setType(MenuAction.RUNELITE);
 				MenuEntry swapShiftClick = client.createMenuEntry(idx)
-					.setOption("Swap shift click")
+					.setOption("Swap shift-click")
 					.setTarget(entry.getTarget())
 					.setType(MenuAction.RUNELITE);
 				Menu subLeft = swapLeftClick.createSubMenu();
@@ -1026,7 +1068,33 @@ public class MenuEntrySwapperPlugin extends Plugin
 						}
 					}
 
-					if (actionIdx == 2)
+					if (subops != null && subops[actionIdx] != null)
+					{
+						for (String subop : subops[actionIdx])
+						{
+							if (subop == null)
+							{
+								continue;
+							}
+
+							if (leftClickOp == null || leftClickOp != subop.hashCode())
+							{
+								subLeft.createMenuEntry(0)
+									.setOption(subop)
+									.setType(MenuAction.RUNELITE)
+									.onClick(heldItemConsumer(itemComposition, subop, subop.hashCode(), false));
+							}
+							if (shiftClickOp == null || shiftClickOp != subop.hashCode())
+							{
+								subShift.createMenuEntry(0)
+									.setOption(subop)
+									.setType(MenuAction.RUNELITE)
+									.onClick(heldItemConsumer(itemComposition, subop, subop.hashCode(), true));
+							}
+						}
+					}
+
+					if (actionIdx + 1 == 4)
 					{
 						// Use
 						if (defaultLeftClickOp != -1 && config.leftClickCustomization())
@@ -1046,34 +1114,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 					}
 				}
 
-				if (config.teleportSubmenus())
-				{
-					var subSwaps = teleportSwaps.get(itemComposition.getId())
-						.stream()
-						.filter(ts -> ts.held)
-						.collect(Collectors.toList());
-					for (TeleportSwap top : subSwaps)
-					{
-						for (TeleportSub sub : top.subs)
-						{
-							if (leftClickOp == null || leftClickOp != sub.option.hashCode())
-							{
-								subLeft.createMenuEntry(0)
-									.setOption(sub.option)
-									.setType(MenuAction.RUNELITE)
-									.onClick(heldItemConsumer(itemComposition, sub.option, sub.option.hashCode(), false));
-							}
-							if (shiftClickOp == null || shiftClickOp != sub.option.hashCode())
-							{
-								subShift.createMenuEntry(0)
-									.setOption(sub.option)
-									.setType(MenuAction.RUNELITE)
-									.onClick(heldItemConsumer(itemComposition, sub.option, sub.option.hashCode(), true));
-							}
-						}
-					}
-				}
-
 				if (leftClickOp != null && config.leftClickCustomization())
 				{
 					subLeft.createMenuEntry(0)
@@ -1082,7 +1122,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 						.onClick(e ->
 						{
 							final String message = new ChatMessageBuilder()
-								.append("The default held left click option for '").append(itemComposition.getMembersName()).append("' ")
+								.append("The default held left-click option for '").append(itemComposition.getMembersName()).append("' ")
 								.append("has been reset.")
 								.build();
 
@@ -1103,7 +1143,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 						.onClick(e ->
 						{
 							final String message = new ChatMessageBuilder()
-								.append("The default held shift click option for '").append(itemComposition.getMembersName()).append("' ")
+								.append("The default held shift-click option for '").append(itemComposition.getMembersName()).append("' ")
 								.append("has been reset.")
 								.build();
 
@@ -1167,7 +1207,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 				}
 
 				final int interId = WidgetUtil.componentToInterface(w.getId());
-				if (interId == InterfaceID.INVENTORY || (interId == InterfaceID.EQUIPMENT && w.getId() != ComponentID.EQUIPMENT_DIZANAS_QUIVER_ITEM_CONTAINER))
+				if (interId == InterfaceID.INVENTORY || (interId == InterfaceID.WORNITEMS && w.getId() != InterfaceID.Wornitems.EXTRA_QUIVER_AMMO))
 				{
 					// inventory and worn items have their own swap systems
 					// other than dizanas quiver, since it's not actually an inventory slot but some static widgets
@@ -1181,13 +1221,13 @@ public class MenuEntrySwapperPlugin extends Plugin
 				{
 					final int componentId = w.getId(); // on dynamic components, this is the parent layer id
 					final int itemId = w.getIndex() == -1 ? -1 : ItemVariationMapping.map(w.getItemId());
-					final int identifier = entry.getIdentifier();
+					final int identifier = getMungedId(entry);
 					final Integer leftClick = getUiSwapConfig(false, componentId, itemId);
 					final Integer shiftClick = getUiSwapConfig(true, componentId, itemId);
 
 					// find lowest op from the widget actions, to prevent setting a swap to the default left click
 					// action regardless of what is swapped.
-					final int lowestOp = findLowestOp(w);
+					final int lowestOp = getMungedId(findLowestOp(w), w.getId(), w.getIndex());
 
 					// find highest op from the current menu, post any existing swaps, for inserting Reset
 					int highestOp = 10;
@@ -1199,17 +1239,17 @@ public class MenuEntrySwapperPlugin extends Plugin
 							continue;
 						}
 
-						highestOp = opEntry.getIdentifier();
+						highestOp = getMungedId(opEntry);
 					}
 
 					if (!initialized)
 					{
 						initialized = true;
 						swapLeftClick = client.createMenuEntry(2)
-							.setOption("Swap left click")
+							.setOption("Swap left-click")
 							.setType(MenuAction.RUNELITE);
 						swapShiftClick = client.createMenuEntry(2)
-							.setOption("Swap shift click")
+							.setOption("Swap shift-click")
 							.setType(MenuAction.RUNELITE);
 						subLeft = swapLeftClick.createSubMenu();
 						subShift = swapShiftClick.createSubMenu();
@@ -1241,7 +1281,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 								.onClick(menuEntry ->
 								{
 									final String message = new ChatMessageBuilder()
-										.append("The default left click option for '").append(Text.removeTags(entry.getTarget())).append("' ")
+										.append("The default left-click option for '").append(Text.removeTags(entry.getTarget())).append("' ")
 										.append("has been reset.")
 										.build();
 
@@ -1264,7 +1304,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 								.onClick(menuEntry ->
 								{
 									final String message = new ChatMessageBuilder()
-										.append("The default shift click option for '").append(Text.removeTags(entry.getTarget())).append("' ")
+										.append("The default shift-click option for '").append(Text.removeTags(entry.getTarget())).append("' ")
 										.append("has been reset.")
 										.build();
 
@@ -1348,15 +1388,16 @@ public class MenuEntrySwapperPlugin extends Plugin
 		}
 
 		final int widgetGroupId = WidgetUtil.componentToInterface(menuEntry.getParam1());
-		final boolean isDepositBoxPlayerInventory = widgetGroupId == InterfaceID.DEPOSIT_BOX;
-		final boolean isChambersOfXericStorageUnitPlayerInventory = widgetGroupId == InterfaceID.CHAMBERS_OF_XERIC_INVENTORY;
-		final boolean isGroupStoragePlayerInventory = widgetGroupId == InterfaceID.GROUP_STORAGE_INVENTORY;
+		final boolean isDepositBoxPlayerInventory = widgetGroupId == InterfaceID.BANK_DEPOSITBOX;
+		final boolean isChambersOfXericStorageUnitPlayerInventory = widgetGroupId == InterfaceID.RAIDS_STORAGE_SIDE;
+		final boolean isGroupStoragePlayerInventory = widgetGroupId == InterfaceID.SHARED_BANK_SIDE;
+		int ident = getMungedId(menuEntry);
 		// Swap to shift-click deposit behavior
 		// Deposit- op 1 is the current withdraw amount 1/5/10/x for deposit box interface and chambers of xeric storage unit.
 		// Deposit- op 2 is the current withdraw amount 1/5/10/x for bank interface
 		if (shiftModifier() && config.bankDepositShiftClick() != ShiftDepositMode.OFF
 			&& type == MenuAction.CC_OP
-			&& menuEntry.getIdentifier() == (isDepositBoxPlayerInventory || isGroupStoragePlayerInventory || isChambersOfXericStorageUnitPlayerInventory ? 1 : 2)
+			&& ident == (isDepositBoxPlayerInventory || isGroupStoragePlayerInventory || isChambersOfXericStorageUnitPlayerInventory ? 1 : 2)
 			&& (menuEntry.getOption().startsWith("Deposit-") || menuEntry.getOption().startsWith("Store") || menuEntry.getOption().startsWith("Donate")))
 		{
 			ShiftDepositMode shiftDepositMode = config.bankDepositShiftClick();
@@ -1372,13 +1413,13 @@ public class MenuEntrySwapperPlugin extends Plugin
 		// Swap to shift-click withdraw behavior
 		// Deposit- op 1 is the current withdraw amount 1/5/10/x
 		if (shiftModifier() && config.bankWithdrawShiftClick() != ShiftWithdrawMode.OFF
-			&& type == MenuAction.CC_OP && menuEntry.getIdentifier() == 1
+			&& type == MenuAction.CC_OP && ident == 1
 			&& menuEntry.getOption().startsWith("Withdraw"))
 		{
 			ShiftWithdrawMode shiftWithdrawMode = config.bankWithdrawShiftClick();
 			final MenuAction action;
 			final int opId;
-			if (widgetGroupId == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE || widgetGroupId == InterfaceID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED)
+			if (widgetGroupId == InterfaceID.RAIDS_STORAGE_PRIVATE || widgetGroupId == InterfaceID.RAIDS_STORAGE_SHARED)
 			{
 				action = MenuAction.CC_OP;
 				opId = shiftWithdrawMode.getIdentifierChambersStorageUnit();
@@ -1403,7 +1444,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		{
 			MenuEntry entry = menuEntries[i];
 
-			if (entry.getType() == entryType && entry.getIdentifier() == entryIdentifier)
+			if (entry.getType() == entryType && getMungedId(entry) == entryIdentifier)
 			{
 				// Raise the priority of the op so it doesn't get sorted later
 				entry.setType(MenuAction.CC_OP);
@@ -1458,6 +1499,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 					client.createMenuEntry(-1)
 						.setOption(menuEntry.getOption())
 						.setTarget(menuEntry.getTarget())
+						.setIdentifier(menuEntry.getIdentifier())
+						.setType(menuEntry.getType() == MenuAction.CC_OP_LOW_PRIORITY ? MenuAction.CC_OP : menuEntry.getType())
+						.setItemId(menuEntry.getItemId())
+						.setParam0(menuEntry.getParam0())
+						.setParam1(menuEntry.getParam1())
 						.onClick(menuEntry.onClick());
 				}
 				return;
@@ -1465,7 +1511,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		}
 
 		// Worn items swap
-		if (w != null && WidgetUtil.componentToInterface(w.getId()) == InterfaceID.EQUIPMENT)
+		if (w != null && WidgetUtil.componentToInterface(w.getId()) == InterfaceID.WORNITEMS)
 		{
 			Widget child = w.getChild(1);
 			if (child != null && child.getItemId() > -1)
@@ -1484,6 +1530,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 						client.createMenuEntry(-1)
 							.setOption(menuEntry.getOption())
 							.setTarget(menuEntry.getTarget())
+							.setIdentifier(menuEntry.getIdentifier())
+							.setType(menuEntry.getType() == MenuAction.CC_OP_LOW_PRIORITY ? MenuAction.CC_OP : menuEntry.getType())
+							.setItemId(menuEntry.getItemId())
+							.setParam0(menuEntry.getParam0())
+							.setParam1(menuEntry.getParam1())
 							.onClick(menuEntry.onClick());
 					}
 					return;
@@ -1546,7 +1597,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 			&& w != null && (w.getIndex() == -1 || w.getItemId() != -1)
 			&& w.getActions() != null
 			&& WidgetUtil.componentToInterface(w.getId()) != InterfaceID.INVENTORY
-			&& (WidgetUtil.componentToInterface(w.getId()) != InterfaceID.EQUIPMENT || w.getId() == ComponentID.EQUIPMENT_DIZANAS_QUIVER_ITEM_CONTAINER))
+			&& (WidgetUtil.componentToInterface(w.getId()) != InterfaceID.WORNITEMS || w.getId() == InterfaceID.Wornitems.EXTRA_QUIVER_AMMO))
 		{
 			// fast check to avoid hitting config on components with single ops
 			if ((index > 0 && menuEntries[index - 1].getWidget() == w) ||
@@ -1555,7 +1606,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 				final int componentId = w.getId(); // on dynamic components, this is the parent layer id
 				final int itemId = w.getIndex() == -1 ? -1 : ItemVariationMapping.map(w.getItemId());
 				final Integer op = getUiSwapConfig(shiftModifier(), componentId, itemId);
-				if (op != null && op == menuEntry.getIdentifier())
+				if (op != null && op == getMungedId(menuEntry))
 				{
 					swap(menu, menuEntries, index, menuEntries.length - 1);
 					return;
@@ -1960,263 +2011,78 @@ public class MenuEntrySwapperPlugin extends Plugin
 			(shift ? UI_SHIFT_KEY_PREFIX : UI_KEY_PREFIX) + componentId + (itemId != -1 ? "_" + itemId : ""));
 	}
 
-	private void setupTeleportSwaps()
+	private int getMungedId(MenuEntry entry)
 	{
-		// region Max cape opworn
-		teleportSwap("Fishing Teleports", ItemID.MAX_CAPE_13342)
-			.worn()
-			.addSub("Fishing Guild", () -> pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 1))
-			.addSub("Otto's Grotto", () -> pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 2));
-		teleportSwap("POH Portals", ItemID.MAX_CAPE_13342)
-			.worn()
-			.addSub("Home", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 0))
-			.addSub("Rimmington", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 1))
-			.addSub("Taverley", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 2))
-			.addSub("Pollnivneach", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 3))
-			.addSub("Hosidius", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 4))
-			.addSub("Rellekka", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 5))
-			.addSub("Aldarin", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6))
-			.addSub("Brimhaven", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 7))
-			.addSub("Yanille", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 8))
-			.addSub("Prifddinas", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 9));
-		teleportSwap("Other Teleports", ItemID.MAX_CAPE_13342)
-			.worn()
-			.addSub("Feldip hills", () ->
-			{
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 1); // Chinchompa Teleports
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 1); // Carnivorous chinchompas (Feldip Hills)
-			})
-			.addSub("Black chinchompas", () ->
-			{
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 1); // Chinchompa Teleports
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 2); // Black chinchompas (Wilderness)
-			})
-			.addSub("Hunter Guild", () ->
-			{
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 1); // Chinchompa Teleports
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 3); // Hunter Guild
-			})
-			.addSub("Farming Guild", () -> pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 2));
-		// endregion
-
-		// region Max cape opheld
-		teleportSwap("Teleports", ItemID.MAX_CAPE)
-			.held()
-			.addSub("Warriors' Guild", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 0))
-			.addSub("Fishing Guild", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 1))
-			.addSub("Crafting Guild", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 2))
-			.addSub("Farming Guild", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 3))
-			.addSub("Otto's Grotto", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 4))
-			.addSub("Feldip hills", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 5); // Chinchompas
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 1); // Carnivorous chinchompas (Feldip Hills)
-			})
-			.addSub("Black chinchompas", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 5); // Chinchompas
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 2); // Black chinchompas (Wilderness)
-			})
-			.addSub("Hunter Guild", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 5); // Chinchompas
-				pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 3); // Hunter Guild
-			})
-			.addSub("Home", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 0);
-			})
-			.addSub("Rimmington", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 1);
-			})
-			.addSub("Taverley", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 2);
-			})
-			.addSub("Pollnivneach", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 3);
-			})
-			.addSub("Hosidius", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 4);
-			})
-			.addSub("Rellekka", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 5);
-			})
-			.addSub("Aldarin", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6);
-			})
-			.addSub("Brimhaven", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 7);
-			})
-			.addSub("Yanille", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 8);
-			})
-			.addSub("Prifddinas", () ->
-			{
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6); // POH Portals
-				pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 9);
-			});
-		// endregion
-
-		// region Con cape
-		teleportSwap("Teleport", ItemID.CONSTRUCT_CAPE, ItemID.CONSTRUCT_CAPET)
-			.worn()
-			.held()
-			.addSub("Home", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 0))
-			.addSub("Rimmington", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 1))
-			.addSub("Taverley", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 2))
-			.addSub("Pollnivneach", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 3))
-			.addSub("Hosidius", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 4))
-			.addSub("Rellekka", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 5))
-			.addSub("Aldarin", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6))
-			.addSub("Brimhaven", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 7))
-			.addSub("Yanille", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 8))
-			.addSub("Prifddinas", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 9));
-		// endregion
-
-		// region Achievement diary cape
-		teleportSwap("Teleport", ItemID.ACHIEVEMENT_DIARY_CAPE, ItemID.ACHIEVEMENT_DIARY_CAPE_T)
-			.worn()
-			.held()
-			.addSub("Two-pints", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 0))
-			.addSub("Jarr", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 1))
-			.addSub("Sir Rebral",  () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 2))
-			.addSub("Thorodin",  () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 3))
-			.addSub("Flax keeper",  () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 4))
-			.addSub("Pirate Jackie the Fruit",  () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 5))
-			.addSub("Kaleb Paramaya",  () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 6))
-			.addSub("Jungle forester", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 7))
-			.addSub("TzHaar-Mej", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 8))
-			.addSub("Elise", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 9))
-			.addSub("Hatius Cosaintus", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 10))
-			.addSub("Le-sabrè", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 11))
-			.addSub("Toby", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 12))
-			.addSub("Lesser Fanatic", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 13))
-			.addSub("Elder Gnome child", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 14))
-			.addSub("Twiggy O'Korn", () -> pauseresume(ComponentID.ADVENTURE_LOG_OPTIONS, 15));
-		// endregion
-
-		// region Hunter cape
-		teleportSwap("Teleport", ItemID.HUNTER_CAPE, ItemID.HUNTER_CAPET)
-			.worn()
-			.held()
-			.addSub("Carnivorous Chinchompas", () -> pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 1))
-			.addSub("Black Chinchompas", () -> pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 2))
-			.addSub("Hunter Guild", () -> pauseresume(ComponentID.DIALOG_OPTION_OPTIONS, 3));
-		// endregion
-	}
-
-	private TeleportSwap teleportSwap(String option, int... items)
-	{
-		Preconditions.checkArgument(items.length > 0, "no items");
-		var ts = new TeleportSwap();
-		ts.option = option;
-		for (int item : items)
+		if ((entry.getType() == MenuAction.CC_OP || entry.getType() == MenuAction.CC_OP_LOW_PRIORITY))
 		{
-			teleportSwaps.put(item, ts);
+			return getMungedId(entry.getIdentifier(), entry.getParam1(), entry.getParam0());
 		}
-		return ts;
+
+		return entry.getIdentifier();
 	}
 
-	@Subscribe
-	public void onMenuEntryAdded(MenuEntryAdded menuEntryAdded)
+	private int getMungedId(int ident, int widgetId, int childIdx)
 	{
-		var me = menuEntryAdded.getMenuEntry();
-		if (me.getWidget() != null && me.getWidget().getId() == ComponentID.EQUIPMENT_CAPE)
+		if (widgetId == InterfaceID.Bankmain.ITEMS
+			&& childIdx >= 0)
 		{
-			var item = me.getWidget().getChild(1);
-			var swap = teleportSwaps.get(item.getItemId())
-				.stream()
-				.filter(ts -> ts.worn)
-				.filter(ts -> ts.option.equals(me.getOption()))
-				.findAny()
-				.orElse(null);
-			if (swap != null && config.teleportSubmenus())
+			int delta = ident;
+			int exclude = client.getVarbitValue(VarbitID.BANK_QUANTITY_TYPE);
+			if (delta == 1)
 			{
-				me.setType(MenuAction.RUNELITE_WIDGET);
-				me.onClick(e -> client.menuAction(e.getParam0(), e.getParam1(), MenuAction.CC_OP,
-					e.getIdentifier(), e.getItemId(), e.getOption(), e.getTarget()));
-				Menu submenu = me.createSubMenu();
-
-				final int p0 = me.getParam0();
-				final int p1 = me.getParam1();
-				final int id = me.getIdentifier();
-				final int itemId = me.getItemId();
-				final String option = me.getOption();
-				final String target = me.getTarget();
-				for (TeleportSub sub : swap.subs)
+				return 1;
+			}
+			if (exclude != 0)
+			{
+				// Withdraw-1
+				if (--delta == 1)
 				{
-					submenu.createMenuEntry(0)
-						.setParam0(p0)
-						.setParam1(p1)
-						.setOption(sub.option)
-						.setTarget(target)
-						.setType(MenuAction.RUNELITE)
-						.onClick(e -> clientThread.invokeLater(() ->
-						{
-							client.menuAction(p0, p1, MenuAction.CC_OP, id, itemId, option, target);
-							sub.execute.run();
-						}));
+					return 2;
 				}
 			}
-		}
-		else if (me.getWidget() != null && me.getWidget().getId() == ComponentID.INVENTORY_CONTAINER)
-		{
-			var swap = teleportSwaps.get(me.getItemId())
-				.stream()
-				.filter(ts -> ts.held)
-				.filter(ts -> ts.option.equals(me.getOption()))
-				.findAny()
-				.orElse(null);
-			if (swap != null && config.teleportSubmenus())
+			if (exclude != 1)
 			{
-				me.setType(MenuAction.RUNELITE_WIDGET);
-				me.onClick(e -> client.menuAction(e.getParam0(), e.getParam1(), MenuAction.CC_OP,
-					e.getIdentifier(), e.getItemId(), e.getOption(), e.getTarget()));
-				Menu submenu = me.createSubMenu();
-
-				final int p0 = me.getParam0();
-				final int p1 = me.getParam1();
-				final int id = me.getIdentifier();
-				final int itemId = me.getItemId();
-				final String option = me.getOption();
-				final String target = me.getTarget();
-				for (TeleportSub sub : swap.subs)
+				// Withdraw-5
+				if (--delta == 1)
 				{
-					submenu.createMenuEntry(0)
-						.setParam0(p0)
-						.setParam1(p1)
-						.setOption(sub.option)
-						.setTarget(target)
-						.setType(MenuAction.RUNELITE)
-						.onClick(e -> clientThread.invokeLater(() ->
-						{
-							client.menuAction(p0, p1, MenuAction.CC_OP, id, itemId, option, target);
-							sub.execute.run();
-						}));
+					return 3;
 				}
 			}
+			if (exclude != 2)
+			{
+				// Withdraw-10
+				if (--delta == 1)
+				{
+					return 4;
+				}
+			}
+			if (exclude != 3 && client.getVarbitValue(VarbitID.BANK_REQUESTEDQUANTITY) > 0)
+			{
+				// Withdraw-<>
+				if (--delta == 1)
+				{
+					return 5;
+				}
+			}
+			// Withdraw-X
+			if (--delta == 1)
+			{
+				return 6;
+			}
+			if (exclude != 4)
+			{
+				// Withdraw-All
+				if (--delta == 1)
+				{
+					return 7;
+				}
+			}
+			// Withdraw-All-but-1
+			if (--delta == 1)
+			{
+				return 8;
+			}
 		}
-	}
-
-	private void pauseresume(@Component int comp, int op)
-	{
-		client.menuAction(op, comp, MenuAction.WIDGET_CONTINUE, -1, -1, "", "");
+		return ident;
 	}
 }

@@ -27,7 +27,7 @@ public class QoLScript extends Script {
         loadNpcData();
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                if (!Microbot.isLoggedIn() || !super.run()) {
+                if (!Microbot.isLoggedIn()) {
                     return;
                 }
 
@@ -55,12 +55,16 @@ public class QoLScript extends Script {
                     handleWorkbenchActions();
                 }
 
-                if (QoLPlugin.executeLoadoutActions && !QoLPlugin.loadoutToLoad.isEmpty()) {
+                if (QoLPlugin.executeLoadoutActions && QoLPlugin.loadoutToLoad != null) {
                     handleInventorySetup();
                 }
 
                 if (config.useDialogueAutoContinue() && Rs2Dialogue.isInDialogue()) {
                     handleDialogueContinue();
+                }
+
+                if (config.useQuestDialogueOptions() && Rs2Dialogue.isInDialogue()) {
+                    Rs2Dialogue.handleQuestOptionDialogueSelection();
                 }
 
 
@@ -84,12 +88,12 @@ public class QoLScript extends Script {
         if (!openBank()) {
             Microbot.log("Bank did not open");
             QoLPlugin.executeLoadoutActions = false;
-            QoLPlugin.loadoutToLoad = "";
+            QoLPlugin.loadoutToLoad = null;
             return;
         }
 
         try {
-            Rs2InventorySetup inventorySetup = new Rs2InventorySetup(QoLPlugin.loadoutToLoad, mainScheduledFuture);
+            Rs2InventorySetup inventorySetup = new Rs2InventorySetup(QoLPlugin.loadoutToLoad.getName(), mainScheduledFuture);
 
             if (!inventorySetup.doesEquipmentMatch()) {
                 inventorySetup.loadEquipment();
@@ -98,10 +102,10 @@ public class QoLScript extends Script {
                 inventorySetup.loadInventory();
             }
             QoLPlugin.executeLoadoutActions = false;
-            QoLPlugin.loadoutToLoad = "";
+            QoLPlugin.loadoutToLoad = null;
         } catch (Exception ignored) {
             QoLPlugin.executeLoadoutActions = false;
-            QoLPlugin.loadoutToLoad = "";
+            QoLPlugin.loadoutToLoad = null;
             Microbot.pauseAllScripts = false;
             Microbot.log("Failed to load inventory setup");
         }
@@ -240,7 +244,7 @@ public class QoLScript extends Script {
 
     // reset all stored menu entries
     //Decrepatated use resetMenuEntries method in main class
-    @Deprecated(since = "1.5.8 Use resetMenuEntries method in main class" , forRemoval = true)
+    @Deprecated(since = "1.5.8 Use resetMenuEntries method in main class", forRemoval = true)
     public void resetMenuEntries() {
         QoLPlugin.bankMenuEntries.clear();
         QoLPlugin.furnaceMenuEntries.clear();

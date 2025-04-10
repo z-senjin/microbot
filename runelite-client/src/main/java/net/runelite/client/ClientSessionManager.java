@@ -29,14 +29,15 @@ import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ClientShutdown;
+import net.runelite.client.plugins.microbot.MicrobotApi;
 import net.runelite.client.util.RunnableExceptionLogger;
 
 @Singleton
@@ -46,31 +47,40 @@ public class ClientSessionManager
 	private final ScheduledExecutorService executorService;
 	private final Client client;
 	private final SessionClient sessionClient;
+	private final boolean disableTelemetry;
 
 	private ScheduledFuture<?> scheduledFuture;
 	private ScheduledFuture<?> scheduledFutureMicroBot;
 
 	private UUID sessionId;
 	private UUID microbotSessionId;
+	private MicrobotApi microbotApi;
 
 	@Inject
 	ClientSessionManager(ScheduledExecutorService executorService,
-		@Nullable Client client,
-		SessionClient sessionClient)
+		Client client,
+		SessionClient sessionClient, MicrobotApi microbotApi,
+        @Named("disableTelemetry") boolean disableTelemetry)
 	{
 		this.executorService = executorService;
 		this.client = client;
 		this.sessionClient = sessionClient;
+		this.microbotApi = microbotApi;
+		this.disableTelemetry = disableTelemetry;
 	}
 
 	public void start()
 	{
+        if (disableTelemetry) {
+            log.info("Telemetry is disabled. ClientSessionManager will not start.");
+            return;
+        }
 		executorService.execute(() ->
 		{
 			try
 			{
 				sessionId = sessionClient.open();
-				microbotSessionId = sessionClient.microbotOpen();
+				microbotSessionId = microbotApi.microbotOpen();
 				log.debug("Opened session {}", sessionId);
 			}
 			catch (IOException ex)
@@ -79,13 +89,16 @@ public class ClientSessionManager
 			}
 		});
 
-		scheduledFuture = executorService.scheduleWithFixedDelay(RunnableExceptionLogger.wrap(this::ping), 1, 10, TimeUnit.MINUTES);
-		scheduledFutureMicroBot = executorService.scheduleWithFixedDelay(RunnableExceptionLogger.wrap(this::microbotPing), 1, 5, TimeUnit.MINUTES);
+		scheduledFuture = executorService.scheduleWithFixedDelay(
+				RunnableExceptionLogger.wrap(this::ping), 1, 10, TimeUnit.MINUTES);
+		scheduledFutureMicroBot = executorService.scheduleWithFixedDelay(
+				RunnableExceptionLogger.wrap(this::microbotPing), 1, 5, TimeUnit.MINUTES);
 	}
 
 	@Subscribe
 	private void onClientShutdown(ClientShutdown e)
 	{
+		if (disableTelemetry) return;
 		scheduledFuture.cancel(true);
 		scheduledFutureMicroBot.cancel(true);
 		e.waitFor(executorService.submit(() ->
@@ -100,7 +113,8 @@ public class ClientSessionManager
 				UUID localMicrobotUuid = microbotSessionId;
 				if (localMicrobotUuid != null)
 				{
-					sessionClient.microbotDelete(localMicrobotUuid);
+					microbotApi.sendScriptStatistics();
+					microbotApi.microbotDelete(localMicrobotUuid);
 				}
 			}
 			catch (IOException ex)
@@ -113,6 +127,11 @@ public class ClientSessionManager
 
 	private void ping()
 	{
+		if (!isWorldHostValid())
+		{
+			return;
+		}
+
 		try
 		{
 			if (sessionId == null)
@@ -128,12 +147,8 @@ public class ClientSessionManager
 			return;
 		}
 
-		boolean loggedIn = false;
-		if (client != null)
-		{
-			GameState gameState = client.getGameState();
-			loggedIn = gameState.getState() >= GameState.LOADING.getState();
-		}
+		GameState gameState = client.getGameState();
+		boolean loggedIn = gameState.getState() >= GameState.LOADING.getState();
 
 		try
 		{
@@ -151,7 +166,7 @@ public class ClientSessionManager
 		try
 		{
 			if (microbotSessionId == null) {
-				microbotSessionId = sessionClient.microbotOpen();
+				microbotSessionId = microbotApi.microbotOpen();
 				return;
 			}
 		}
@@ -170,7 +185,7 @@ public class ClientSessionManager
 
 		try
 		{
-			sessionClient.microbotPing(microbotSessionId, loggedIn);
+			microbotApi.microbotPing(microbotSessionId, loggedIn);
 		}
 		catch (IOException ex)
 		{
@@ -178,5 +193,11 @@ public class ClientSessionManager
 			sessionId = null;
 		}
 
+	}
+
+	private boolean isWorldHostValid()
+	{
+		String host = client.getWorldHost();
+		return host != null && host.endsWith(".runescape.com");
 	}
 }

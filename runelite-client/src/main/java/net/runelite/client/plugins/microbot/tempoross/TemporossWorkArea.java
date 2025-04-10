@@ -80,6 +80,7 @@ public class TemporossWorkArea
     }
 
     public TileObject getMast() {
+        //WorldPoint localInstance = WorldPoint.toLocalInstance(Microbot.getClient().getTopLevelWorldView(),mastPoint).stream().findFirst().orElse(null);
     TileObject mast = Rs2GameObject.findGameObjectByLocation(mastPoint);
     if (mast != null && (mast.getId() == NullObjectID.NULL_41352 || mast.getId() == NullObjectID.NULL_41353)) {
         return mast;
@@ -88,6 +89,7 @@ public class TemporossWorkArea
 }
 
     public TileObject getBrokenMast() {
+        //WorldPoint localInstance = WorldPoint.toLocalInstance(Microbot.getClient().getTopLevelWorldView(),mastPoint).stream().findFirst().orElse(null);
     TileObject mast = Rs2GameObject.findGameObjectByLocation(mastPoint);
     if (mast != null && (mast.getId() == ObjectID.DAMAGED_MAST_40996 || mast.getId() == ObjectID.DAMAGED_MAST_40997))
         return mast;
@@ -96,7 +98,8 @@ public class TemporossWorkArea
     }
 
     public TileObject getTotem() {
-    TileObject totem = Rs2GameObject.findGameObjectByLocation(totemPoint);
+        //WorldPoint localInstance = WorldPoint.toLocalInstance(Microbot.getClient().getTopLevelWorldView(),totemPoint).stream().findFirst().orElse(null);
+        TileObject totem = Rs2GameObject.findGameObjectByLocation(totemPoint);
     if (totem != null && (totem.getId() == NullObjectID.NULL_41355 || totem.getId() == NullObjectID.NULL_41354)) {
         return totem;
     }
@@ -104,6 +107,7 @@ public class TemporossWorkArea
 }
 
     public TileObject getBrokenTotem() {
+        //WorldPoint localInstance = WorldPoint.toLocalInstance(Microbot.getClient().getTopLevelWorldView(),totemPoint).stream().findFirst().orElse(null);
     TileObject totem = Rs2GameObject.findGameObjectByLocation(totemPoint);
     if (totem != null && (totem.getId() == ObjectID.DAMAGED_TOTEM_POLE || totem.getId() == ObjectID.DAMAGED_TOTEM_POLE_41011))
         return totem;
@@ -113,6 +117,7 @@ public class TemporossWorkArea
 
     public TileObject getRange()
     {
+        //WorldPoint localInstance = WorldPoint.toLocalInstance(Microbot.getClient().getTopLevelWorldView(),rangePoint).stream().findFirst().orElse(null);
         return Rs2GameObject.findObject(ObjectID.SHRINE_41236, rangePoint);
     }
 
@@ -132,7 +137,23 @@ public class TemporossWorkArea
     Rs2WorldPoint totemLocation = new Rs2WorldPoint(totem.getWorldLocation());
     Rs2WorldPoint playerLocation = new Rs2WorldPoint(Microbot.getClient().getLocalPlayer().getWorldLocation());
 
-    return mastLocation.distanceToPath(Microbot.getClient(),playerLocation.getWorldPoint()) <
-            totemLocation.distanceToPath(Microbot.getClient(),playerLocation.getWorldPoint()) ? mast : totem;
+    return mastLocation.distanceToPath(playerLocation.getWorldPoint()) <
+            totemLocation.distanceToPath(playerLocation.getWorldPoint()) ? mast : totem;
 }
+
+    public String getAllPointsAsString() {
+        String sb = "exitNpc=" + exitNpc +
+                ", safePoint=" + safePoint +
+                ", bucketPoint=" + bucketPoint +
+                ", pumpPoint=" + pumpPoint +
+                ", ropePoint=" + ropePoint +
+                ", hammerPoint=" + hammerPoint +
+                ", harpoonPoint=" + harpoonPoint +
+                ", mastPoint=" + mastPoint +
+                ", totemPoint=" + totemPoint +
+                ", rangePoint=" + rangePoint +
+                ", spiritPoolPoint=" + spiritPoolPoint;
+
+        return sb;
+    }
 }

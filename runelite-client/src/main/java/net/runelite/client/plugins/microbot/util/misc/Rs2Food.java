@@ -2,6 +2,11 @@ package net.runelite.client.plugins.microbot.util.misc;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.runelite.api.ItemID;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @RequiredArgsConstructor
@@ -57,7 +62,8 @@ public enum Rs2Food {
     COOKED_SUNLIGHT_ANTELOPE(29140, 21, "Cooked sunlight antelope"),
     COOKED_DASHING_KEBBIT(29134, 23, "Cooked dashing kebbit"),
     COOKED_MOONLIGHT_ANTELOPE(29143, 26, "Cooked moonlight antelope"),
-    PURPLE_SWEETS(10476, 3, "Purple Sweets");
+    PURPLE_SWEETS(10476, 3, "Purple Sweets"),
+    CABBAGE(ItemID.CABBAGE, 1, "Cabbage");
 
     private int id;
     private int heal;
@@ -84,6 +90,11 @@ public enum Rs2Food {
 
     public String getName() {
         return name;
+    }
+
+    // get all ids as a set
+    public static Set<Integer> getIds() {
+        return Arrays.stream(values()).map(Rs2Food::getId).collect(Collectors.toSet());
     }
 
 }

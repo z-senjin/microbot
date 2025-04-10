@@ -1,6 +1,8 @@
 package net.runelite.client.plugins.microbot.mining;
 
 import net.runelite.api.GameObject;
+import net.runelite.api.ItemID;
+import net.runelite.api.NpcID;
 import net.runelite.api.Skill;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
@@ -14,6 +16,7 @@ import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
+import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +30,9 @@ enum State {
 
 public class AutoMiningScript extends Script {
 
-    public static String version = "1.4.2";
+    public static final String version = "1.4.4";
+    private static final int GEM_MINE_UNDERGROUND = 11410;
+    private static final int BASALT_MINE = 11425;
     State state = State.MINING;
 
     public boolean run(AutoMiningConfig config) {
@@ -61,7 +66,7 @@ public class AutoMiningScript extends Script {
                             return;
                         }
 
-                        GameObject rock = Rs2GameObject.findObject(config.ORE().getName(), true, config.distanceToStray(), true, initialPlayerLocation);
+                        GameObject rock = Rs2GameObject.findReachableObject(config.ORE().getName(), true, config.distanceToStray(), initialPlayerLocation);
 
                         if (rock != null) {
                             if (Rs2GameObject.interact(rock)) {
@@ -75,17 +80,24 @@ public class AutoMiningScript extends Script {
                         List<String> itemNames = Arrays.stream(config.itemsToBank().split(",")).map(String::toLowerCase).collect(Collectors.toList());
 
                         if (config.useBank()) {
-                            if (config.ORE() == Rocks.GEM) {
-                                if (Rs2DepositBox.openDepositBox())
+                            if (config.ORE() == Rocks.GEM && Rs2Player.getWorldLocation().getRegionID() == GEM_MINE_UNDERGROUND) {
+                                if (Rs2DepositBox.openDepositBox()) {
                                     Rs2DepositBox.depositAll();
-                                Rs2DepositBox.closeDepositBox();
+                                    Rs2DepositBox.closeDepositBox();
+                                }
+                            }
+                            else if (Rocks.BASALT == config.ORE() && BASALT_MINE == Rs2Player.getWorldLocation().getRegionID()) {
+                                if (Rs2Walker.walkTo(2872,3935,0)){
+                                    Rs2Inventory.useItemOnNpc(ItemID.BASALT, NpcID.SNOWFLAKE);
+                                    Rs2Walker.walkTo(2841,10339,0);
+                                }
                             } else {
                                 if (!Rs2Bank.bankItemsAndWalkBackToOriginalPosition(itemNames, initialPlayerLocation, 0, config.distanceToStray()))
                                     return;
                             }
 
                         } else {
-                            Rs2Inventory.dropAllExcept("pickaxe");
+                            Rs2Inventory.dropAllExcept(false, config.interactOrder(), Arrays.stream(config.itemsToKeep().split(",")).map(String::trim).toArray(String[]::new));
                         }
 
                         state = State.MINING;

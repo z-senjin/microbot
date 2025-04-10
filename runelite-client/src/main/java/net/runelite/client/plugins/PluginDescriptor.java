@@ -25,12 +25,19 @@
 package net.runelite.client.plugins;
 
 import java.awt.*;
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-public @interface PluginDescriptor {
+public @interface PluginDescriptor
+{
+    String DrDeath = "<html>[<font color=#FF0000>DD</font>]";
+    String Bee = "<html>[<font color=#FFD700><b>B</b></font>] ";
     String Nate = "<html>[<font color=orange>N</font>] ";
     String Mocrosoft = "<html>[<font color=#b8f704M>M</font>] ";
     String OG = "<html>[<font color=#FF69B4>O</font>] ";
@@ -50,59 +57,65 @@ public @interface PluginDescriptor {
     String Mntn = "<html>[<font color=#964B00>⛰️</font>] ";
     String GZ = "<html>[<font color=#0077B6>\u2728</font>] ";
     String StickToTheScript = "<html>[<font color=#FF4F00>STTS</font>] ";
+    String Gabulhas = "<html>[<font color=#F44FB0>Gab</font>] ";
     String zerozero ="<html>[<font color=#000000>00</font>] " ;
     String LiftedMango = "<html>[<font color=#FF7F50>\uD83E\uDD6D</font>] ";
     String eXioStorm = "<html>[<font color=#ff00dc>§</font>] "; Color stormColor = new Color(255, 0, 220);
     String Girdy = "<html>[<font color=#3DED97>\u01E5</font>] ";
+    String Cicire = "<html>[<font color=#68ff00>Ci</font>] ";
+    String Budbomber = "<html>[<font color='#0077B6'>bb</font>] ";
+    String ChillX = "<html>[<font color=#05e1f5>C</font>] ";
+    String Gage = "<html>[<font color=#00008B>Gage</font>] ";
+	String Bradley = "<html>[<font color=#E32636>BR</font>] ";
+	String Frosty = "<html>[<font color=#00FFFF>\u2744</font>] ";
 
-    String name();
 
-    /**
-     * Internal name used in the config.
-     */
-    String configName() default "";
 
-    /**
-     * A short, one-line summary of the plugin.
-     */
-    String description() default "";
+	String name();
 
-    /**
-     * A list of plugin keywords, used (together with the name) when searching for plugins.
-     * Each tag should not contain any spaces, and should be fully lowercase.
-     */
-    String[] tags() default {};
+	/**
+	 * Internal name used in the config.
+	 */
+	String configName() default "";
 
-    /**
-     * A list of plugin names that are mutually exclusive with this plugin. Any plugins
-     * with a name or conflicts value that matches this will be disabled when this plugin
-     * is started
-     */
-    String[] conflicts() default {};
+	/**
+	 * A short, one-line summary of the plugin.
+	 */
+	String description() default "";
 
-    /**
-     * If this plugin should be defaulted to on. Plugin-Hub plugins should always
-     * have this set to true (the default), since having them off by defaults means
-     * the user has to install the plugin, then separately enable it, which is confusing.
-     */
-    boolean enabledByDefault() default true;
+	/**
+	 * A list of plugin keywords, used (together with the name) when searching for plugins.
+	 * Each tag should not contain any spaces, and should be fully lowercase.
+	 */
+	String[] tags() default {};
+
+	/**
+	 * A list of plugin names that are mutually exclusive with this plugin. Any plugins
+	 * with a name or conflicts value that matches this will be disabled when this plugin
+	 * is started
+	 */
+	String[] conflicts() default {};
+
+	/**
+	 * If this plugin should be defaulted to on. Plugin-Hub plugins should always
+	 * have this set to true (the default), since having them off by defaults means
+	 * the user has to install the plugin, then separately enable it, which is confusing.
+	 */
+	boolean enabledByDefault() default true;
 
     /**
      * always on
      */
     boolean alwaysOn() default false;
 
-    /**
-     * Whether or not plugin is hidden from configuration panel
-     */
-    boolean hidden() default false;
+	/**
+	 * Whether or not plugin is hidden from configuration panel
+	 */
+	boolean hidden() default false;
 
-    boolean developerPlugin() default false;
+	boolean developerPlugin() default false;
 
-    /**
-     * If this plugin should be loaded when there is no {@link net.runelite.api.Client}
-     */
-    boolean loadWhenOutdated() default false;
+	boolean loadInSafeMode() default true;
 
-    boolean loadInSafeMode() default true;
+	boolean canBeScheduled() default false;
 }

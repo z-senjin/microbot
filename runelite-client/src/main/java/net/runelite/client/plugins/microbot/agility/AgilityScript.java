@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 import static net.runelite.api.NullObjectID.*;
 import static net.runelite.api.ObjectID.LADDER_36231;
-import static net.runelite.client.plugins.microbot.util.math.Random.random;
 import static net.runelite.client.plugins.microbot.agility.enums.AgilityCourseName.GNOME_STRONGHOLD_AGILITY_COURSE;
 import static net.runelite.client.plugins.microbot.agility.enums.AgilityCourseName.PRIFDDINAS_AGILITY_COURSE;
 
@@ -59,6 +58,7 @@ public class AgilityScript extends Script {
     WorldPoint startCourse = null;
 
     public static int currentObstacle = 0;
+    private static boolean isWalkingToStart = false;
 
     public static final Set<Integer> PORTAL_OBSTACLE_IDS = ImmutableSet.of(
             // Prifddinas portals
@@ -163,7 +163,6 @@ public class AgilityScript extends Script {
 
         Rs2Antiban.resetAntibanSettings();
         Rs2Antiban.antibanSetupTemplates.applyAgilitySetup();
-
         init(config);
         mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
@@ -182,7 +181,8 @@ public class AgilityScript extends Script {
                 // Eat food.
                 Rs2Player.eatAt(config.hitpoints());
 
-                if (Rs2Player.isMoving()) return;
+                if(isWalkingToStart) Microbot.log("isWalkingToStart: true");
+                else if (Rs2Player.isMoving()) return;
                 if (Rs2Player.isAnimating()) return;
 
                 if (currentObstacle >= getCurrentCourse(config).size()) {
@@ -192,7 +192,7 @@ public class AgilityScript extends Script {
                 if (config.agilityCourse() == PRIFDDINAS_AGILITY_COURSE) {
                     TileObject portal = Rs2GameObject.findObject(PORTAL_OBSTACLE_IDS.stream().collect(Collectors.toList()));
 
-                    if (portal != null && Microbot.getClientThread().runOnClientThread(() -> portal.getClickbox()) != null) {
+                    if (portal != null && Microbot.getClientThread().runOnClientThreadOptional(() -> portal.getClickbox()) != null) {
                         if (Rs2GameObject.interact(portal, "travel")) {
                             sleep(2000, 3000);
                             return;
@@ -209,6 +209,8 @@ public class AgilityScript extends Script {
                         }
                         if (Rs2Player.getWorldLocation().distanceTo(startCourse) < 100) {//extra check for prif course
                             Rs2Walker.walkTo(startCourse, 8);
+                            Microbot.log("Going back to course's starting point");
+                            isWalkingToStart = true;
                             return;
                         }
                     }
@@ -267,6 +269,7 @@ public class AgilityScript extends Script {
                         }
 
                         if (Rs2GameObject.interact(gameObject)) {
+                            isWalkingToStart = false;
                             //LADDER_36231 in prifddinas does not give experience
                             if (gameObject.getId() != LADDER_36231 && waitForAgilityObstabcleToFinish(agilityExp))
                                 break;
@@ -288,7 +291,8 @@ public class AgilityScript extends Script {
     }
 
     private boolean waitForAgilityObstabcleToFinish(final int agilityExp) {
-        sleepUntilOnClientThread(() -> agilityExp != Microbot.getClient().getSkillExperience(Skill.AGILITY), 10000);
+        double healthPlaceholder= Rs2Player.getHealthPercentage();
+        sleepUntilOnClientThread(() -> agilityExp != Microbot.getClient().getSkillExperience(Skill.AGILITY)||healthPlaceholder>Rs2Player.getHealthPercentage(), 15000);
 
 
         if (agilityExp != Microbot.getClient().getSkillExperience(Skill.AGILITY) || Microbot.getClient().getTopLevelWorldView().getPlane() == 0) {

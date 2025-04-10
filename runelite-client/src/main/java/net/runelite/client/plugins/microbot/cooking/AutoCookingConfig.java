@@ -5,7 +5,7 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.plugins.microbot.cooking.enums.*;
-import net.runelite.client.plugins.microbot.util.inventory.DropOrder;
+import net.runelite.client.plugins.microbot.util.inventory.InteractOrder;
 
 @ConfigGroup("autocooking")
 public interface AutoCookingConfig extends Config {
@@ -47,6 +47,42 @@ public interface AutoCookingConfig extends Config {
     )
     default CookingActivity cookingActivity() {
         return CookingActivity.COOKING;
+    }
+
+    @ConfigSection(
+            name = "Burn Baking",
+            description = "Burn Baking Settings",
+            position = 3,
+            closedByDefault = true
+    )
+    String burnBakingSection = "burnBakingSection";
+
+    @ConfigItem(
+            keyName = "burnBakingDescription",
+            name = "About Burn Baking",
+            description = "Information about this plugin",
+            position = 1,
+            section = burnBakingSection
+    )
+    default String burnBakingDescription() {
+        return "The goal with burn baking is to burn the most valuable foods from a low cooking level in F2P:\n\n" +
+                "1. To Burn Bake, in Cooking Activity, select Burn Baking and select below your desired cooking level.\n" +
+                "2. Start from level 1 cooking in the Clan Hall by the Bank, burn baking exclusively works in the Clan hall.\n" +
+                "3. From level 1-40 cooking minimum required ingredients are 420 pots of flour, 420 buckets of water, " +
+                "420 bowls of water, 420 potatoes and 420 Cooked Meat or Cooked Chicken.\n" +
+                "4. From 40 cooking onwards the script will only bake cakes. The most optimal for burnt cakes is 1200 " +
+                "of each cake ingredient from level 40 cooking.";
+    }
+
+    @ConfigItem(
+            keyName = "desiredCookingLevel",
+            name = "Desired Cooking Level",
+            description = "Enter the cooking level you'd like to aim for when burn baking",
+            position = 2,
+            section = burnBakingSection
+    )
+    default int cookingLevel() {
+        return 56; // Default level, can be changed by the user
     }
 
     @ConfigItem(
@@ -94,13 +130,25 @@ public interface AutoCookingConfig extends Config {
     }
 
     @ConfigItem(
+            name = "Drop Burnt Items",
+            keyName = "shouldDropBurntItems",
+            position = 4,
+            description = "Should drop burnt items when resetting inventory",
+            section = cookingSection
+    )
+    default boolean shouldDropBurntItems() {
+        return true;
+    }
+
+    @ConfigItem(
             name = "DropOrder",
             keyName = "dropOrder",
-            position = 4,
+            position = 5,
             description = "The order in which to drop items",
             section = cookingSection
     )
-    default DropOrder getDropOrder() {
-        return DropOrder.STANDARD;
+    default InteractOrder getDropOrder() {
+        return InteractOrder.STANDARD;
     }
+
 }

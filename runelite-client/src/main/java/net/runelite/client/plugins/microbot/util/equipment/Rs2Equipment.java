@@ -3,7 +3,7 @@ package net.runelite.client.plugins.microbot.util.equipment;
 import net.runelite.api.*;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.client.plugins.microbot.Microbot;
-import net.runelite.client.plugins.microbot.util.inventory.Rs2Item;
+import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 import net.runelite.client.plugins.microbot.util.menu.NewMenuEntry;
 import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 
@@ -12,21 +12,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class Rs2Equipment {
     public static ItemContainer equipment() {
         return Microbot.getClient().getItemContainer(InventoryID.EQUIPMENT);
     }
 
-    public static List<Rs2Item> equipmentItems = new ArrayList<>();
+    public static List<Rs2ItemModel> equipmentItems = new ArrayList<>();
     
-    public static List<Rs2Item> items() {
+    public static List<Rs2ItemModel> items() {
         return equipmentItems;
     }
 
     public static void storeEquipmentItemsInMemory(ItemContainerChanged e) {
         if (e.getContainerId() == InventoryID.EQUIPMENT.getId() && e.getItemContainer() != null) {
-            List<Rs2Item> _equipmentItems = new ArrayList<>();
+            List<Rs2ItemModel> _equipmentItems = new ArrayList<>();
             for (int i = 0; i < e.getItemContainer().getItems().length; i++) {
                 Item item = equipment().getItems()[i];
                 if (item.getId() == -1) continue;
@@ -34,8 +35,9 @@ public class Rs2Equipment {
                 Optional<EquipmentInventorySlot> equipmentSlot = Arrays.stream(EquipmentInventorySlot.values()).filter(x -> x.getSlotIdx() == finalI).findFirst();
                 if (equipmentSlot.isEmpty()) continue;
                 int slot = equipmentSlot.get().getSlotIdx();
-                ItemComposition itemComposition = Microbot.getClientThread().runOnClientThread(() -> Microbot.getClient().getItemDefinition(item.getId()));
-                _equipmentItems.add(new Rs2Item(item, itemComposition, slot));
+                ItemComposition itemComposition = Microbot.getClientThread().runOnClientThreadOptional(() ->
+                        Microbot.getClient().getItemDefinition(item.getId())).orElse(null);
+                _equipmentItems.add(new Rs2ItemModel(item, itemComposition, slot));
             }
             equipmentItems = _equipmentItems;
         }
@@ -47,7 +49,7 @@ public class Rs2Equipment {
             return false;
         }
 
-        Rs2Item item = get(itemId);
+        Rs2ItemModel item = get(itemId);
 
         if (item== null) {
             return false;
@@ -92,15 +94,15 @@ public class Rs2Equipment {
     }
 
 
-    public static Rs2Item get(EquipmentInventorySlot slot) {
+    public static Rs2ItemModel get(EquipmentInventorySlot slot) {
         return equipmentItems.stream().filter(x -> x.slot == slot.getSlotIdx()).findFirst().orElse(null);
     }
 
-    public static Rs2Item get(int id) {
+    public static Rs2ItemModel get(int id) {
         return equipmentItems.stream().filter(x -> x.id == id).findFirst().orElse(null);
     }
 
-    public static Rs2Item get(String name, boolean exact) {
+    public static Rs2ItemModel get(String name, boolean exact) {
         if (exact) {
             return equipmentItems.stream().filter(x -> x.name.equalsIgnoreCase(name))
                     .findFirst()
@@ -112,41 +114,80 @@ public class Rs2Equipment {
 
     }
 
-    public static Rs2Item get(String name) {
+    public static Rs2ItemModel get(String name) {
         return get(name, false);
+    }
+
+    /**
+     * Checks if the equipment contains an item that matches the specified predicate.
+     *
+     * @param predicate The predicate to apply.
+     * @return True if the equipment contains an item that matches the predicate, false otherwise.
+     */
+    public static boolean contains(Predicate<Rs2ItemModel> predicate) {
+        return items().stream().anyMatch(predicate);
+    }
+
+    /**
+     * Retrieves an equipped item that matches the specified predicate.
+     *
+     * @param predicate The predicate to apply.
+     * @return The matching `Rs2Item` if found, or null otherwise.
+     */
+    public static Rs2ItemModel get(Predicate<Rs2ItemModel> predicate) {
+        return items().stream().filter(predicate).findFirst().orElse(null);
+    }
+
+
+    /**
+     * Interacts with an equipped item matching the predicate.
+     *
+     * @param predicate The predicate to identify the item.
+     * @param action    The action to perform.
+     * @return True if the interaction was successful, false otherwise.
+     */
+    public static boolean interact(Predicate<Rs2ItemModel> predicate, String action) {
+        Rs2ItemModel item = get(predicate);
+        if (item != null) {
+            invokeMenu(item, action);
+            return true;
+        }
+        return false;
     }
 
 
     @Deprecated(since = "Use isWearing", forRemoval = true)
     public static boolean hasEquipped(String itemName) {
-        return Microbot.getClientThread().runOnClientThread(() -> {
+        return Microbot.getClientThread().runOnClientThreadOptional(() -> {
             for (EquipmentInventorySlot value : EquipmentInventorySlot.values()) {
-                Rs2Item item = get(value);
+                Rs2ItemModel item = get(value);
                 if (item == null) continue;
                 if (item.name.equalsIgnoreCase(itemName)) {
                     return true;
                 }
             }
             return false;
-        });
+        }).orElse(false);
     }
 
     public static boolean hasEquippedContains(String itemName) {
-        return Microbot.getClientThread().runOnClientThread(() -> {
+        return Microbot.getClientThread().runOnClientThreadOptional(() -> {
             for (EquipmentInventorySlot value : EquipmentInventorySlot.values()) {
-                Rs2Item item = get(value);
+                Rs2ItemModel item = get(value);
                 if (item == null) continue;
                 if (item.name.toLowerCase().contains(itemName.toLowerCase())) {
                     return true;
                 }
             }
             return false;
-        });
+        }).orElse(false);
     }
 
     public static boolean hasEquipped(int id) {
-        return Microbot.getClientThread().runOnClientThread(() -> {
-            final ItemContainer container = Microbot.getClientThread().runOnClientThread(() -> Microbot.getClient().getItemContainer(InventoryID.EQUIPMENT));
+        return Microbot.getClientThread().runOnClientThreadOptional(() -> {
+
+            final ItemContainer container = Microbot.getClient().getItemContainer(InventoryID.EQUIPMENT);
+
             if (container == null) return false;
             for (EquipmentInventorySlot value : EquipmentInventorySlot.values()) {
                 Item itemSlot = container.getItem(value.getSlotIdx());
@@ -156,19 +197,20 @@ public class Rs2Equipment {
                 }
             }
             return false;
-        });
+        }).orElse(false);
     }
 
     public static boolean hasEquippedSlot(EquipmentInventorySlot slot) {
-        return Microbot.getClientThread().runOnClientThread(() -> {
-            final ItemContainer container = Microbot.getClientThread().runOnClientThread(() -> Microbot.getClient().getItemContainer(InventoryID.EQUIPMENT));
+        return Microbot.getClientThread().runOnClientThreadOptional(() -> {
+
+            final ItemContainer container =  Microbot.getClient().getItemContainer(InventoryID.EQUIPMENT);
 
             if (container == null) return false;
 
             Item itemSlot = container.getItem(slot.getSlotIdx());
 
             return itemSlot != null;
-        });
+        }).orElse(false);
     }
 
     public static boolean isEquipped(String name, EquipmentInventorySlot slot) {
@@ -176,13 +218,13 @@ public class Rs2Equipment {
     }
 
     public static boolean isEquipped(int id, EquipmentInventorySlot slot) {
-        final Rs2Item item = get(slot);
+        final Rs2ItemModel item = get(slot);
 
         return item != null && item.id == id;
     }
 
     public static boolean isEquipped(String name, EquipmentInventorySlot slot, boolean exact) {
-        final Rs2Item item = get(slot);
+        final Rs2ItemModel item = get(slot);
         if (exact) {
             return item != null && item.name.equalsIgnoreCase(name);
         } else {
@@ -263,7 +305,7 @@ public class Rs2Equipment {
     }
 
     public static boolean interact(EquipmentInventorySlot slot, String action) {
-        Rs2Item item = get(slot);
+        Rs2ItemModel item = get(slot);
         if (item != null) {
             invokeMenu(item, action);
             return true;
@@ -272,16 +314,16 @@ public class Rs2Equipment {
     }
 
     /**
+     * Interacts with an item identified by its ID.
      *
-     * @param name
-     * @return
+     * This method retrieves the item with the given ID and performs an action on it if found.
+     *
+     * @param id The unique identifier of the item to interact with.
+     * @param action The action to perform on the item (e.g., "use", "equip").
+     * @return True if the item was found and the action was performed, otherwise false.
      */
-    public static boolean unEquip(String name) {
-        return interact(name, "remove");
-    }
-
     public static boolean interact(int id, String action) {
-        Rs2Item item = get(id);
+        Rs2ItemModel item = get(id);
         if (item != null) {
             invokeMenu(item, action);
             return true;
@@ -289,14 +331,45 @@ public class Rs2Equipment {
         return false;
     }
 
+    /**
+     * Interacts with an item identified by its name.
+     *
+     * This method retrieves the item with the given name and performs an action on it if found.
+     *
+     * @param name The name of the item to interact with.
+     * @param action The action to perform on the item (e.g., "use", "equip").
+     * @return True if the item was found and the action was performed, otherwise false.
+     */
     public static boolean interact(String name, String action) {
-        Rs2Item item = get(name);
+        Rs2ItemModel item = get(name);
         if (item != null) {
             invokeMenu(item, action);
             return true;
         }
         return false;
     }
+
+    /**
+     * Interacts with any item from a list of IDs.
+     *
+     * This method iterates over a list of item IDs, retrieves the first matching item,
+     * and performs an action on it if found.
+     *
+     * @param ids An array of item IDs to search through.
+     * @param action The action to perform on the first matching item (e.g., "use", "equip").
+     * @return True if any item from the list was found and the action was performed, otherwise false.
+     */
+    public static boolean interact(int[] ids, String action) {
+        for (Integer id : ids) {
+            Rs2ItemModel item = get(id);
+            if (item != null) {
+                invokeMenu(item, action);
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * @param name
@@ -305,7 +378,7 @@ public class Rs2Equipment {
      * @return
      */
     public static boolean interact(String name, String action, boolean exact) {
-        Rs2Item item = get(name, exact);
+        Rs2ItemModel item = get(name, exact);
         if (item != null) {
             invokeMenu(item, action);
             return true;
@@ -317,7 +390,11 @@ public class Rs2Equipment {
         return equipmentItems.stream().anyMatch(x -> x.getSlot() == EquipmentInventorySlot.SHIELD.getSlotIdx());
     }
 
-    public static void invokeMenu(Rs2Item rs2Item, String action) {
+    public static boolean isNaked() {
+        return equipmentItems.stream().allMatch(x -> x.id == -1);
+    }
+
+    public static void invokeMenu(Rs2ItemModel rs2Item, String action) {
         if (rs2Item == null) return;
 
         Rs2Tab.switchToEquipmentTab();

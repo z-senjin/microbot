@@ -3,17 +3,18 @@ package net.runelite.client.plugins.microbot.tempoross;
 import com.google.inject.Inject;
 import lombok.Setter;
 import net.runelite.api.GameObject;
-import net.runelite.api.NPC;
 import net.runelite.api.Perspective;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.util.coords.Rs2WorldPoint;
+import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayUtil;
+import net.runelite.client.util.Text;
 
 import java.awt.*;
 import java.util.List;
@@ -23,13 +24,18 @@ import static net.runelite.client.plugins.microbot.tempoross.TemporossScript.wor
 public class TemporossOverlay extends Overlay {
 
     private final TemporossPlugin plugin;
+
     // Add a setter method to feed the list of NPCs
     @Setter
-    private static List<NPC> npcList; // Add this field to store the list of NPCs
+    private static List<Rs2NpcModel> npcList; // Add this field to store the list of NPCs
     @Setter
-    private static List<NPC> fishList; // Add this field to store the list of NPCs
+    private static List<Rs2NpcModel> fishList; // Add this field to store the list of NPCs
     @Setter
     private static List<GameObject> cloudList; // Add this field to store the list of NPCs
+    @Setter
+    private static List<Rs2NpcModel> ammoList; // Add this field to store the list of NPCs
+    @Setter
+    private static List<Rs2NpcModel> leaveList; // Add this field to store the list of NPCs
 
     @Inject
     public TemporossOverlay(TemporossPlugin plugin) {
@@ -46,16 +52,28 @@ public class TemporossOverlay extends Overlay {
 
         // Render NPC overlays if the list is not null
         if (npcList != null) {
-            for (NPC npc : npcList) {
-                Rs2WorldPoint npcLocation = new Rs2WorldPoint(npc.getWorldLocation());
+            for (Rs2NpcModel npc : npcList) {
+                Rs2WorldPoint npcLocation = new Rs2WorldPoint(npc.getRuneliteNpc().getWorldLocation());
                 Rs2WorldPoint playerLocation = new Rs2WorldPoint(Microbot.getClient().getLocalPlayer().getWorldLocation());
-                renderNpcOverlay(graphics, npc, Color.RED,    npcLocation.distanceToPath(Microbot.getClient(), playerLocation.getWorldPoint()) + " tiles");
+                renderNpcOverlay(graphics, npc, Color.RED,    npcLocation.distanceToPath(playerLocation.getWorldPoint()) + " tiles");
+            }
+        }
+        if (ammoList != null) {
+            for (Rs2NpcModel npc : ammoList) {
+                Rs2WorldPoint npcLocation = new Rs2WorldPoint(npc.getRuneliteNpc().getWorldLocation());
+                Rs2WorldPoint playerLocation = new Rs2WorldPoint(Microbot.getClient().getLocalPlayer().getWorldLocation());
+                renderNpcOverlay(graphics, npc, Color.RED,    npcLocation.distanceToPath(playerLocation.getWorldPoint()) + " " + Text.removeTags(npc.getName()));
             }
         }
         if (fishList != null) {
-            for (NPC npc : fishList) {
+            for (Rs2NpcModel npc : fishList) {
                 Rs2WorldPoint npcLocation = new Rs2WorldPoint(npc.getWorldLocation());
-                renderNpcOverlay(graphics, npc, Color.RED,    cloudList.isEmpty() ? "Duck was here" :  "In Cloud " + TemporossScript.inCloud(npcLocation.getWorldPoint(),1));
+                renderNpcOverlay(graphics, npc, Color.RED,   "Duck was here");
+            }
+        }
+        if (cloudList != null) {
+            for (GameObject object : cloudList) {
+                renderGameObject(graphics, object, Color.RED, "Cloud");
             }
         }
 
@@ -82,8 +100,8 @@ public class TemporossOverlay extends Overlay {
         if (point == null) {
             return;
         }
-
-        LocalPoint localPoint = LocalPoint.fromWorld(Microbot.getClient(), point);
+        //WorldPoint pl = WorldPoint.toLocalInstance(Microbot.getClient().getTopLevelWorldView(), point).stream().findFirst().orElse(null);
+        LocalPoint localPoint = LocalPoint.fromWorld(Microbot.getClient().getTopLevelWorldView(), point);
         if (localPoint == null) {
             return;
         }
@@ -120,7 +138,7 @@ public class TemporossOverlay extends Overlay {
     }
 
     // Add this method to render overlays for NPCs
-    private void renderNpcOverlay(Graphics2D graphics, NPC npc, Color color, String label) {
+    private void renderNpcOverlay(Graphics2D graphics, Rs2NpcModel npc, Color color, String label) {
         if (npc == null || npc.getConvexHull() == null) {
             return;
         }

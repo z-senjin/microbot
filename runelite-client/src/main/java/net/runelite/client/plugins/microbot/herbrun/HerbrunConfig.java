@@ -5,190 +5,46 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigInformation;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.plugins.microbot.inventorysetups.InventorySetup;
 
-@ConfigGroup("example")
-@ConfigInformation("IMPORTANT!<br/>Ensure your chosen seeds match the herb currently planted. For example, if growing snapdragon, make sure snapdragon is already in the patch; otherwise, the herbs won’t note.<br/><br/>If weeds grow right after picking the seeds, it may skip the patch without planting new seeds.<br/> <br/>Start next to a bank<br/><br /><p>Have the following in your bank:</p>\n" +
-        "<ol>\n" +
-        "    <li>Ardougne cloak</li>\n" +
-        "    <li>Ultracompost or Bottomless compost bucket (filled)</li>\n" +
-        "    <li>Magic Secateurs</li>\n" +
-        "    <li>Seed dibber</li>\n" +
-        "    <li>Spade</li>\n" +
-        "    <li>Rake</li>\n" +
-        "    <li>Ectophial</li>\n" +
-        "    <li>Any Quetzal whistle (WITH CHARGES)</li>\n" +
-        "    <li>Stony Basalt/Trollheim tab</li>\n" +
-        "    <li>Icy Basalt</li>\n" +
-        "    <li>Skills necklace</li>\n" +
-        "    <li>Explorer's Ring</li>\n" +
-        "    <li>Herb seeds</li>\n" +
-        "    <li>Camelot teleport tab</li>\n" +
-        "    <li>Xeric's talisman</li>\n" +
-        "    <li>Harmony Teleport tab</li>\n" +
-        "</ol>")
-
+@ConfigInformation("This plugin will run the herb run.\n" +
+        "Setup an appropriate inventory setup with seeds, \n" +
+        "teleports for the enabled locations, \n" +
+        "rake, spade, seed dibber \n" +
+        "and ultracompost or bottomless compost.\n" +
+        "Credits to liftedmango and See1Duck")
+@ConfigGroup("Herbrun")
 public interface HerbrunConfig extends Config {
 
-//    @ConfigSection(
-//            name = "Guide",
-//            description = "Guide",
-//            position = 1
-//    )
-//    String guideSection = "Guide";
-
-
-//    @ConfigItem(
-//            keyName = "guide",
-//            name = "How to use",
-//            description = "How to use this plugin",
-//            position = 1,
-//            section = guideSection
-//    )
-//    default String GUIDE() {
-//        return "Start next to a bank\n" +
-//                "Have the following in your bank:\n" +
-//                "1. Ardougne cloak\n" +
-//                "2. Ultracompost or Bottomless compost bucket (filled)\n" +
-//                "3. Magic Secatuers\n" +
-//                "4. Seed dibber\n" +
-//                "5. Spade\n" +
-//                "6. Rake\n" +
-//                "7. Ectophial \n" +
-//                "8. Any Quetzal whistle (WITH CHARGES)\n" +
-//                "9. Stony Basalt/Trollheim tab\n" +
-//                "10. Icy Basalt\n" +
-//                "11. Skills necklace \n" +
-//                "12. Explorer's Ring \n" +
-//                "13. Herb seeds \n" +
-//                "14. Camelot teleport tab\n" +
-//                "15. Xeric's talisman\n" +
-//                "16. If using Harmony Island patch, have Harmony Teleport tab";
-//
-//    }
+    @ConfigSection(
+            name = "Settings",
+            description = "Settings",
+            position = 0
+    )
+    String settingsSection = "Settings";
 
     @ConfigItem(
-            keyName = "fastHerb",
-            name = "Fast Herb Picking?",
-            description = "Enable quick herb picking",
-            position = 4,
+            keyName = "inventorySetup",
+            name = "Inventory Setup",
+            description = "Inventory setup to use",
+            position = 1,
             section = settingsSection
     )
-    default boolean FAST_HERB() {
-        return false;
+    default InventorySetup inventorySetup() {
+        return null;
     }
 
     @ConfigItem(
-            keyName = "bottomless",
-            name = "Use bottomless bucket?",
-            description = "Should  bottomless bucket be withdrawn from the bank?",
-            position = 4,
+            keyName = "goToBank",
+            name = "Go to bank",
+            description = "Go to closest bank after run",
+            position = 2,
             section = settingsSection
     )
-    default boolean COMPOST() {
+    default boolean goToBank() {
         return true;
     }
 
-    @ConfigItem(
-            keyName = "farmingCape",
-            name = "Use Farming cape?",
-            description = "Use Farming cape instead of Skills necklace?",
-            position = 4,
-            section = settingsSection
-    )
-    default boolean FARMING_CAPE() {
-        return false;
-    }
-
-    @ConfigItem(
-            keyName = "ardougne_teleport",
-            name = "Use Ardougne cloak?",
-            description = "Does your adougne cloak still have charges for today? If not the script will use Ardy tab",
-            position = 4,
-            section = settingsSection
-    )
-    default boolean ARDOUGNE_TELEPORT_OPTION() {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "falador_teleport",
-            name = "Use Explorer's ring?",
-            description = "Does your ring still have charges for today? If not the script will use falador tab",
-            position = 4,
-            section = settingsSection
-    )
-    default boolean FALADOR_TELEPORT_OPTION() {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "graceful",
-            name = "Equip graceful?",
-            description = "Should graceful be equipped from bank?",
-            position = 4,
-            section = settingsSection
-    )
-    default boolean GRACEFUL() {
-        return true;
-    }
-
-
-    @ConfigItem(
-            keyName = "seedTypes",
-            name = "Seeds to use",
-            description = "Which seeds to use for the herb run?",
-            position = 3,
-            section = settingsSection
-    )
-    default HerbrunInfo.seedType SEED() {
-        return HerbrunInfo.seedType.KWUARM_SEED;
-    }
-
-    @ConfigItem(
-            keyName = "cloakType",
-            name = "Cloak to use",
-            description = "Which cloak to use for the herb run?",
-            position = 3,
-            section = settingsSection
-    )
-    default HerbrunInfo.cloak CLOAK() {
-        return HerbrunInfo.cloak.ARDOUGNE_CLOAK_3;
-    }
-
-    @ConfigItem(
-            keyName = "ringType",
-            name = "Explorers ring to use",
-            description = "Which explorers ring to use for the herb run?",
-            position = 3,
-            section = settingsSection
-    )
-    default HerbrunInfo.ring RING() {
-        return HerbrunInfo.ring.EXPLORERS_RING_3;
-    }
-
-    @ConfigItem(
-            keyName = "trollHeim teleport Type",
-            name = "Trollheim teleport to use?",
-            description = "Which trollheim teleport to use??",
-            position = 3,
-            section = settingsSection
-    )
-    default HerbrunInfo.trollheimTeleport TROLLHEIMTELEPORT() {
-        return HerbrunInfo.trollheimTeleport.STONY_BASALT;
-    }
-
-    @ConfigItem(
-            keyName = "enableGearing",
-            name = "Enable Gearing",
-            description = "Enable Gearing? Helps with debugging a specific location...",
-            position = 0,
-            section = locationSection
-    )
-    default boolean enableGearing() {
-        return true;
-    }
-
-    // Location toggles for each patch location
     @ConfigItem(
             keyName = "enableTrollheim",
             name = "Enable Trollheim Patch",
@@ -251,7 +107,9 @@ public interface HerbrunConfig extends Config {
             position = 6,
             section = locationSection
     )
-    default boolean enableArdougne() { return true; }
+    default boolean enableArdougne() {
+        return true;
+    }
 
     @ConfigItem(
             keyName = "enableFalador",
@@ -286,40 +144,21 @@ public interface HerbrunConfig extends Config {
         return true;
     }
 
-    @ConfigItem(
-            keyName = "enableHarmony",
-            name = "Enable Harmony Island Patch",
-            description = "Enable Harmony Island patch in herb run",
-            position = 9,
-            section = locationSection
-    )
-    default boolean enableHarmony() {
-        return false;
-    }
-
-
-    @ConfigSection(
-            name = "Settings",
-            description = "Settings",
-            position = 2
-    )
-    String settingsSection = "Settings";
-
+    //    @ConfigItem(
+//            keyName = "enableHarmony",
+//            name = "Enable Harmony Island Patch",
+//            description = "Enable Harmony Island patch in herb run",
+//            position = 9,
+//            section = locationSection
+//    )
+//    default boolean enableHarmony() {
+//        return false;
+//    }
     @ConfigSection(
             name = "Location toggles",
             description = "Location toggles",
-            position = 3
+            position = 1
     )
     String locationSection = "Location";
-/*    @ConfigItem(
-            keyName = "Ore",
-            name = "Ore",
-            description = "Choose the ore",
-            position = 0
-    )
-    default List<String> ORE()
-    {
-        return Rocks.TIN;
-    }*/
 
 }

@@ -27,21 +27,6 @@ package net.runelite.client.plugins.gpu;
 import com.google.common.primitives.Ints;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.BufferProvider;
-import net.runelite.api.Client;
-import net.runelite.api.Constants;
-import net.runelite.api.GameState;
-import net.runelite.api.IntProjection;
-import net.runelite.api.Model;
-import net.runelite.api.Perspective;
-import net.runelite.api.Projection;
-import net.runelite.api.Renderable;
-import net.runelite.api.Scene;
-import net.runelite.api.SceneTileModel;
-import net.runelite.api.SceneTilePaint;
-import net.runelite.api.Texture;
-import net.runelite.api.TextureProvider;
-import net.runelite.api.TileObject;
 import net.runelite.api.*;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.hooks.DrawCallbacks;
@@ -588,6 +573,10 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			{
 				return "#define THREAD_COUNT " + threadCount + "\n" +
 					"#define FACES_PER_THREAD " + facesPerThread + "\n";
+			}
+			if ("texture_config".equals(key))
+			{
+				return "#define TEXTURE_COUNT " + TextureManager.TEXTURE_COUNT + "\n";
 			}
 			return null;
 		});
@@ -1371,7 +1360,21 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 				return;
 			}
 
-			throw ex;
+			log.error("error swapping buffers", ex);
+
+			// try to stop the plugin
+			SwingUtilities.invokeLater(() ->
+			{
+				try
+				{
+					pluginManager.stopPlugin(this);
+				}
+				catch (PluginInstantiationException ex2)
+				{
+					log.error("error stopping plugin", ex2);
+				}
+			});
+			return;
 		}
 
 		drawManager.processDrawComplete(this::screenshot);
@@ -1493,6 +1496,15 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		{
 			// Avoid drawing the last frame's buffer during LOADING after LOGIN_SCREEN
 			targetBufferOffset = 0;
+		}
+		if (gameStateChanged.getGameState() == GameState.STARTING)
+		{
+			if (textureArrayId != -1)
+			{
+				textureManager.freeTextureArray(textureArrayId);
+			}
+			textureArrayId = -1;
+			lastAnisotropicFilteringLevel = -1;
 		}
 	}
 

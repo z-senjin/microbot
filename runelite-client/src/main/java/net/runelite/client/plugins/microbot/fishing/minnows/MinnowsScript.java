@@ -11,6 +11,7 @@ import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
+import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 
 import java.util.concurrent.TimeUnit;
@@ -26,7 +27,7 @@ public class MinnowsScript extends Script {
     private static final int FISHING_SPOT_2_ID = NpcID.FISHING_SPOT_7733;
 
     private static int TARGET_SPOT_ID = FISHING_SPOT_1_ID;
-    private NPC fishingspot;
+    private Rs2NpcModel fishingspot;
     private int timeout;
 
     public boolean run() {
@@ -48,7 +49,7 @@ public class MinnowsScript extends Script {
                     return;
                 }
                 if (Rs2AntibanSettings.actionCooldownActive) {
-                    if (Microbot.getClient().getLocalPlayer().getInteracting().hasSpotAnim(FLYING_FISH_GRAPHIC_ID)) {
+                    if (Rs2Player.getInteracting().hasSpotAnim(FLYING_FISH_GRAPHIC_ID)) {
                         if (TARGET_SPOT_ID == FISHING_SPOT_1_ID) {
                             TARGET_SPOT_ID = FISHING_SPOT_2_ID;
                         } else if (TARGET_SPOT_ID == FISHING_SPOT_2_ID) {

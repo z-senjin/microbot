@@ -1,4 +1,4 @@
-# Origin	Destination	Skills	Items	Quests	Duration	Display info
+# Origin	Destination	Skills	Item IDs	Quests	Duration	Display info
 2412 4434 0					5
 2996 3114 0					5
 2700 3247 0					5
@@ -17,13 +17,12 @@
 3410 3324 0					5
 3251 3095 0					5
 2635 3266 0					5
-2264 2976 0					5
+2267 2976 0					5
 2650 4730 0				Holy Grail	5
 2150 3070 0				Regicide	5
 2385 3035 0					5
 3041 4532 0					5
 3469 3431 0					5
-2412 4434 0					5
 2437 5126 0					5
 3572 4372 0				Hopespear's Will	5
 2740 3351 0					5
@@ -51,7 +50,6 @@
 3423 3016 0					5
 2213 3099 0					5
 3447 9824 0				In Search of the Myreque	5
-	2412 4434 0				5	ZANARIS
 	2996 3114 0				5	AIQ
 	2700 3247 0				5	AIR
 	2328 4426 0				5	AIR DLR DJQ AJS
@@ -69,7 +67,7 @@
 	3410 3324 0				5	BIP
 	3251 3095 0				5	BIQ
 	2635 3266 0				5	BIS
-	2264 2976 0				5	BJP
+	2267 2976 0				5	BJP
 	2650 4730 0			Holy Grail	5	BJR
 	2150 3070 0			Regicide	5	BJS
 	2385 3035 0				5	BKP
@@ -103,3 +101,7 @@
 	3423 3016 0				5	DLQ
 	2213 3099 0				5	DLR
 	3447 9824 0			In Search of the Myreque	5	DLS
+1651 3010 0				Children of the Sun	5	
+1359 2941 0				Children of the Sun	5	
+	1651 3010 0			Children of the Sun	5	AJP
+	1359 2941 0			Children of the Sun	5	CKQ

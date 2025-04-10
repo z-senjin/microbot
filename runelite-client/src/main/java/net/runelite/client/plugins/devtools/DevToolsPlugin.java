@@ -28,14 +28,41 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.formdev.flatlaf.extras.FlatInspector;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.inject.Provides;
+import java.awt.AWTEvent;
+import java.awt.KeyboardFocusManager;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.AWTEventListener;
+import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import static java.lang.Math.min;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
+import javax.swing.JOptionPane;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
+import net.runelite.api.Experience;
+import net.runelite.api.IndexedSprite;
 import net.runelite.api.Menu;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.*;
+import net.runelite.api.events.ClientTick;
+import net.runelite.api.events.CommandExecuted;
+import net.runelite.api.events.MenuEntryAdded;
+import net.runelite.api.events.ScriptCallbackEvent;
+import net.runelite.api.events.StatChanged;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.kit.KitType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
@@ -161,13 +188,13 @@ public class DevToolsPlugin extends Plugin
 	private MicrobotMouseOverlay microbotMouseOverlay;
 	private DevToolsButton players;
 	private DevToolsButton npcs;
-	private DevToolsButton inventory;
 	private DevToolsButton groundItems;
 	private DevToolsButton groundObjects;
 	private DevToolsButton gameObjects;
 	private DevToolsButton graphicsObjects;
 	private DevToolsButton walls;
 	private DevToolsButton decorations;
+	private DevToolsButton tileObjects;
 	private DevToolsButton projectiles;
 	private DevToolsButton location;
 	private DevToolsButton zoneBorders;
@@ -195,6 +222,10 @@ public class DevToolsPlugin extends Plugin
 	private DevToolsButton mouseMovement;
 	private NavigationButton navButton;
 
+	//custom devtools from microbot
+	private DevToolsButton inventory;
+	private DevToolsButton memoryInspector;
+
 	@Provides
 	DevToolsConfig provideConfig(ConfigManager configManager)
 	{
@@ -207,13 +238,14 @@ public class DevToolsPlugin extends Plugin
 		players = new DevToolsButton("Players");
 		npcs = new DevToolsButton("NPCs");
 		inventory = new DevToolsButton("Inventory");
-
+		memoryInspector = new DevToolsButton("Memory");
 		groundItems = new DevToolsButton("Ground Items");
 		groundObjects = new DevToolsButton("Ground Objects");
 		gameObjects = new DevToolsButton("Game Objects");
 		graphicsObjects = new DevToolsButton("Graphics Objects");
 		walls = new DevToolsButton("Walls");
 		decorations = new DevToolsButton("Decorations");
+		tileObjects = new DevToolsButton("Tile Objects");
 
 		projectiles = new DevToolsButton("Projectiles");
 
@@ -446,24 +478,24 @@ public class DevToolsPlugin extends Plugin
 			case "tex":
 			{
 				Player player = client.getLocalPlayer();
-				player.getPlayerComposition().getEquipmentIds()[KitType.CAPE.getIndex()] = ItemID.FIRE_CAPE + PlayerComposition.ITEM_OFFSET;
-				player.getPlayerComposition().getEquipmentIds()[KitType.SHIELD.getIndex()] = ItemID.MIRROR_SHIELD + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.CAPE.getIndex()] = ItemID.TZHAAR_CAPE_FIRE + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.SHIELD.getIndex()] = ItemID.SLAYER_MIRROR_SHIELD + PlayerComposition.ITEM_OFFSET;
 				player.getPlayerComposition().setHash();
 				break;
 			}
 			case "alpha":
 			{
 				Player player = client.getLocalPlayer();
-				player.getPlayerComposition().getEquipmentIds()[KitType.HEAD.getIndex()] = ItemID.GHOSTLY_HOOD + PlayerComposition.ITEM_OFFSET;
-				player.getPlayerComposition().getEquipmentIds()[KitType.AMULET.getIndex()] = ItemID.AMULET_OF_TORTURE_OR + PlayerComposition.ITEM_OFFSET;
-				player.getPlayerComposition().getEquipmentIds()[KitType.CAPE.getIndex()] = ItemID.GHOSTLY_CLOAK + PlayerComposition.ITEM_OFFSET;
-				player.getPlayerComposition().getEquipmentIds()[KitType.TORSO.getIndex()] = ItemID.GHOSTLY_ROBE + PlayerComposition.ITEM_OFFSET;
-				player.getPlayerComposition().getEquipmentIds()[KitType.SHIELD.getIndex()] = ItemID.ELYSIAN_SPIRIT_SHIELD + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.HEAD.getIndex()] = ItemID.SECRET_GHOST_HAT + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.AMULET.getIndex()] = ItemID.ZENYTE_AMULET_ORNAMENT + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.CAPE.getIndex()] = ItemID.SECRET_GHOST_CLOAK + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.TORSO.getIndex()] = ItemID.SECRET_GHOST_TOP + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.SHIELD.getIndex()] = ItemID.ELYSIAN + PlayerComposition.ITEM_OFFSET;
 				player.getPlayerComposition().getEquipmentIds()[KitType.ARMS.getIndex()] = -1;
-				player.getPlayerComposition().getEquipmentIds()[KitType.LEGS.getIndex()] = ItemID.GHOSTLY_ROBE_6108 + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.LEGS.getIndex()] = ItemID.SECRET_GHOST_BOTTOM + PlayerComposition.ITEM_OFFSET;
 				player.getPlayerComposition().getEquipmentIds()[KitType.HAIR.getIndex()] = -1;
-				player.getPlayerComposition().getEquipmentIds()[KitType.HANDS.getIndex()] = ItemID.GHOSTLY_GLOVES + PlayerComposition.ITEM_OFFSET;
-				player.getPlayerComposition().getEquipmentIds()[KitType.BOOTS.getIndex()] = ItemID.GHOSTLY_BOOTS + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.HANDS.getIndex()] = ItemID.SECRET_GHOST_GLOVES + PlayerComposition.ITEM_OFFSET;
+				player.getPlayerComposition().getEquipmentIds()[KitType.BOOTS.getIndex()] = ItemID.SECRET_GHOST_BOOTS + PlayerComposition.ITEM_OFFSET;
 				player.getPlayerComposition().setHash();
 				break;
 			}
@@ -557,29 +589,69 @@ public class DevToolsPlugin extends Plugin
 		if (EXAMINE_MENU_ACTIONS.contains(action))
 		{
 			MenuEntry entry = event.getMenuEntry();
-
 			final int identifier = event.getIdentifier();
-			String info = "ID: ";
+			String info = "";
 
 			if (action == MenuAction.EXAMINE_NPC)
 			{
 				NPC npc = entry.getNpc();
 				assert npc != null;
-				info += npc.getId();
+				info = "NPC ID: " + npc.getId();
 			}
-			else
+			else if (action == MenuAction.EXAMINE_OBJECT)
 			{
-				info += identifier;
-
-				if (action == MenuAction.EXAMINE_OBJECT)
-				{
-					WorldPoint point = WorldPoint.fromScene(client, entry.getParam0(), entry.getParam1(), client.getPlane());
-					info += " X: " + point.getX() + " Y: " + point.getY();
-				}
+				WorldPoint point = WorldPoint.fromScene(client, entry.getParam0(), entry.getParam1(), client.getPlane());
+				String objectType = getObjectType(event);
+				info = objectType + " ID: " + identifier + " X: " + point.getX() + " Y: " + point.getY();
+			}
+			else if (action == MenuAction.EXAMINE_ITEM || action == MenuAction.EXAMINE_ITEM_GROUND)
+			{
+				info = "Item ID: " + identifier;
 			}
 
 			entry.setTarget(entry.getTarget() + " " + ColorUtil.prependColorTag("(" + info + ")", JagexColors.MENU_TARGET));
 		}
+	}
+
+	private String getObjectType(MenuEntryAdded event)
+	{
+		Scene scene = client.getScene();
+		Tile[][][] tiles = scene.getTiles();
+		int z = client.getPlane();
+		MenuEntry entry = event.getMenuEntry();
+		int x = entry.getParam0();
+		int y = entry.getParam1();
+
+		if (x >= 0 && y >= 0 && z >= 0 && x < Constants.SCENE_SIZE && y < Constants.SCENE_SIZE)
+		{
+			Tile tile = tiles[z][x][y];
+			if (tile != null)
+			{
+				if (tile.getWallObject() != null && tile.getWallObject().getId() == event.getIdentifier())
+				{
+					return "Wall";
+				}
+				if (tile.getDecorativeObject() != null && tile.getDecorativeObject().getId() == event.getIdentifier())
+				{
+					return "Decorative";
+				}
+				if (tile.getGroundObject() != null && tile.getGroundObject().getId() == event.getIdentifier())
+				{
+					return "Ground";
+				}
+				if (tile.getGameObjects() != null)
+				{
+					for (GameObject gameObject : tile.getGameObjects())
+					{
+						if (gameObject != null && gameObject.getId() == event.getIdentifier())
+						{
+							return "Game";
+						}
+					}
+				}
+			}
+		}
+		return "Unknown";
 	}
 
 	@Subscribe
@@ -626,5 +698,61 @@ public class DevToolsPlugin extends Plugin
 					.onClick(c -> client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "menu " + i_, null));
 			}
 		}
+	}
+
+	TileObject findTileObject(int x, int y, int id)
+	{
+		x += (Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2;
+		y += (Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2;
+		Scene scene = client.getScene();
+		Tile[][][] tiles = scene.getExtendedTiles();
+		Tile tile = tiles[client.getPlane()][x][y];
+		if (tile != null)
+		{
+			for (GameObject gameObject : tile.getGameObjects())
+			{
+				if (gameObject != null && gameObject.getId() == id)
+				{
+					return gameObject;
+				}
+			}
+
+			WallObject wallObject = tile.getWallObject();
+			if (wallObject != null && wallObject.getId() == id)
+			{
+				return wallObject;
+			}
+
+			DecorativeObject decorativeObject = tile.getDecorativeObject();
+			if (decorativeObject != null && decorativeObject.getId() == id)
+			{
+				return decorativeObject;
+			}
+
+			GroundObject groundObject = tile.getGroundObject();
+			if (groundObject != null && groundObject.getId() == id)
+			{
+				return groundObject;
+			}
+		}
+		return null;
+	}
+
+	static Map<Integer, String> loadFieldNames(Class<?> clazz)
+	{
+		var map = ImmutableMap.<Integer, String>builder();
+		try
+		{
+			for (Field f : clazz.getDeclaredFields())
+			{
+				map.put(f.getInt(null), f.getName());
+			}
+		}
+		catch (ReflectiveOperationException e)
+		{
+			log.debug("Failed to load fields", e);
+		}
+
+		return map.build();
 	}
 }

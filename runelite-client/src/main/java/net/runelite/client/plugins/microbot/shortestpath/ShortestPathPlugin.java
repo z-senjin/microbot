@@ -49,7 +49,6 @@ import net.runelite.client.plugins.microbot.shortestpath.pathfinder.CollisionMap
 import net.runelite.client.plugins.microbot.shortestpath.pathfinder.Pathfinder;
 import net.runelite.client.plugins.microbot.shortestpath.pathfinder.PathfinderConfig;
 import net.runelite.client.plugins.microbot.shortestpath.pathfinder.SplitFlagMap;
-import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.tile.Rs2Tile;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
@@ -80,7 +79,7 @@ import java.util.regex.Pattern;
         description = "Draws the shortest path to a chosen destination on the map (right click a spot on the world map to use)",
         tags = {"pathfinder", "map", "waypoint", "navigation", "microbot"},
         enabledByDefault = true,
-        alwaysOn = false
+        alwaysOn = true
 )
 public class ShortestPathPlugin extends Plugin implements KeyListener {
     protected static final String CONFIG_GROUP = "shortestpath";
@@ -93,6 +92,8 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
     private static final String SET = "Set";
     private static final String START = ColorUtil.wrapWithColorTag("Start", JagexColors.MENU_TARGET);
     private static final String TARGET = ColorUtil.wrapWithColorTag("Target", JagexColors.MENU_TARGET);
+    private static final String TEST = ColorUtil.wrapWithColorTag("Test Target", JagexColors.MENU_TARGET);
+
     public static final BufferedImage MARKER_IMAGE = ImageUtil.loadImageResource(ShortestPathPlugin.class, "marker.png");
 
     @Inject
@@ -103,6 +104,7 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
     private ClientThread clientThread;
 
     @Inject
+    @Getter(AccessLevel.PACKAGE)
     private ShortestPathConfig config;
 
     @Inject
@@ -125,6 +127,9 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
 
     @Inject
     private DebugOverlayPanel debugOverlayPanel;
+    
+    @Inject
+    private ETAOverlayPanel etaOverlayPanel;
 
     @Inject
     private SpriteManager spriteManager;
@@ -181,12 +186,7 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
         pathfinderConfig = new PathfinderConfig(map, transports, restrictions, client, config);
 
         panel = injector.getInstance(ShortestPathPanel.class);
-        BufferedImage icon;
-        try {
-            icon = ImageUtil.loadImageResource(ShortestPathPlugin.class, "/net/runelite/client/plugins/microbot/shortestpath/panel_icon.png");
-        } catch (IllegalArgumentException e) {
-            icon = null;
-        }
+        final BufferedImage icon = ImageUtil.loadImageResource(ShortestPathPlugin.class, "panel_icon.png");
         navButton = NavigationButton.builder()
                 .tooltip("Web Walker")
                 .icon(icon)
@@ -203,6 +203,9 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
         overlayManager.add(pathMinimapOverlay);
         overlayManager.add(pathMapOverlay);
         overlayManager.add(pathMapTooltipOverlay);
+        if (config.showETA()) {
+            overlayManager.add(etaOverlayPanel);
+        }
 
         if (config.drawDebugPanel()) {
             overlayManager.add(debugOverlayPanel);
@@ -217,6 +220,9 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
         overlayManager.remove(pathMapOverlay);
         overlayManager.remove(pathMapTooltipOverlay);
         overlayManager.remove(debugOverlayPanel);
+        clientToolbar.removeNavigation(navButton);
+        navButton = null;
+        panel = null;
 
         shortestPathScript.shutdown();
 
@@ -288,6 +294,15 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
             return;
         }
 
+        if ("showETA".equals(event.getKey())) {
+            if (config.showETA()) {
+                overlayManager.add(etaOverlayPanel);
+            } else {
+                overlayManager.remove(etaOverlayPanel);
+            }
+            return;
+        }
+
         // Transport option changed; rerun pathfinding
         if (TRANSPORT_OPTIONS_REGEX.matcher(event.getKey()).find()) {
             if (pathfinder != null) {
@@ -341,14 +356,6 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
             if (Microbot.getClientThread().scheduledFuture != null) {
                 Microbot.getClientThread().scheduledFuture.cancel(true);
             }
-            return;
-        }
-
-        if (!startPointSet && !isNearPath(Rs2Player.getWorldLocation())) {
-            if (config.cancelInstead()) {
-                return;
-            }
-            restartPathfinding(Rs2Player.getWorldLocation(), pathfinder.getTarget());
         }
     }
 
@@ -380,6 +387,9 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
                 client.getMouseCanvasPosition().getX(),
                 client.getMouseCanvasPosition().getY())) {
             addMenuEntry(event, SET, TARGET, 0);
+            if (Microbot.isDebug()) {
+                addMenuEntry(event, SET, TEST, 0);
+            }
             if (pathfinder != null) {
                 if (pathfinder.getTarget() != null) {
                     addMenuEntry(event, SET, START, 0);
@@ -416,8 +426,11 @@ public class ShortestPathPlugin extends Plugin implements KeyListener {
         if (entry.getOption().equals(SET) && entry.getTarget().equals(TARGET)) {
             WorldPoint worldPoint = getSelectedWorldPoint();
             shortestPathScript.setTriggerWalker(worldPoint);
+        }
+        if (entry.getOption().equals(SET) && entry.getTarget().equals(TEST)) {
             //For debugging you can use setTarget, it will calculate path without walking
-            //setTarget(BankLocation.MINING_GUILD.getWorldPoint());
+            WorldPoint worldPoint = getSelectedWorldPoint();
+            setTarget(worldPoint);
         }
 
         if (entry.getOption().equals(SET) && entry.getTarget().equals(START)) {

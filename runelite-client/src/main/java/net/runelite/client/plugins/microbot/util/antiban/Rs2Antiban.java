@@ -11,7 +11,6 @@ import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.antiban.enums.ActivityIntensity;
 import net.runelite.client.plugins.microbot.util.antiban.enums.Category;
 import net.runelite.client.plugins.microbot.util.antiban.enums.PlayStyle;
-import net.runelite.client.plugins.microbot.util.math.Random;
 import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.ui.overlay.components.*;
@@ -308,7 +307,7 @@ public class Rs2Antiban {
         }
 
         if (Rs2AntibanSettings.moveMouseOffScreen)
-            moveMouseOffScreen();
+            moveMouseOffScreen((Rs2AntibanSettings.moveMouseOffScreenChance*100));
     }
 
 
@@ -350,7 +349,7 @@ public class Rs2Antiban {
         }
         if (Math.random() < Rs2AntibanSettings.microBreakChance) {
             Rs2AntibanSettings.microBreakActive = true;
-            BreakHandlerScript.breakDuration = Random.random(Rs2AntibanSettings.microBreakDurationLow * 60, Rs2AntibanSettings.microBreakDurationHigh * 60);
+            BreakHandlerScript.breakDuration = Rs2Random.between(Rs2AntibanSettings.microBreakDurationLow*60, Rs2AntibanSettings.microBreakDurationHigh*60);
             if (Rs2AntibanSettings.moveMouseOffScreen)
                 moveMouseOffScreen();
             return true;
@@ -503,12 +502,28 @@ public class Rs2Antiban {
 
     /**
      * <h1>Move Mouse Off Screen</h1>
-     * This method moves the mouse off the screen with a 1/4 chance to trigger.
+     * This method moves the mouse off the screen with a 100% chance to trigger.
      * This is used to simulate a user moving the mouse off the screen to take a break.
      */
     public static void moveMouseOffScreen() {
-        Microbot.naturalMouse.moveOffScreen();
+        // Always move the mouse off screen
+        Microbot.naturalMouse.moveOffScreen(100.0); // Calls the overloaded method with a 100% chance
     }
+
+    /**
+     * <h1>Move Mouse Off Screen</h1>
+     * This method moves the mouse off the screen based on a specified chance percentage.
+     * This is used to simulate a user moving the mouse off the screen to take a break.
+     *
+     * @param chance the chance (in percentage) to move the mouse off screen.
+     *               This value should be between 0.0 and 100.0 (inclusive).
+     *               Note: This parameter should represent a whole percentage (e.g., 25.0, 50.0)
+     *               and should not be a fractional value between 0.0 and 0.99.
+     */
+    public static void moveMouseOffScreen(double chance) {
+        Microbot.naturalMouse.moveOffScreen(chance);
+    }
+
 
     /**
      * <h1>Move Mouse Randomly</h1>
@@ -536,7 +551,7 @@ public class Rs2Antiban {
         Rs2AntibanSettings.reset();
         Rs2Antiban.playStyle = null;
         Rs2Antiban.activity = null;
-        Rs2Antiban.activityIntensity = null;
+        Rs2Antiban.activityIntensity = ActivityIntensity.EXTREME;
         Rs2Antiban.category = null;
     }
 

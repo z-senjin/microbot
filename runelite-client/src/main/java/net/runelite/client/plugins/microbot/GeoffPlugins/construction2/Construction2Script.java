@@ -11,6 +11,7 @@ import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.math.Random;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
+import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
@@ -54,7 +55,7 @@ public class Construction2Script extends Script {
         return Rs2GameObject.findObjectById(15394); // ID for mythical cape mount
     }
 
-    public NPC getButler() {
+    public Rs2NpcModel getButler() {
         return Rs2Npc.getNpc("Demon butler");
     }
 
@@ -242,11 +243,11 @@ public class Construction2Script extends Script {
     }
 
     private void butler(Construction2Config config, int actionDelay) {
-        NPC butler = getButler();
+        var butler = getButler();
         if (butler == null) return;
-        boolean butlerIsTooFar = Microbot.getClientThread().runOnClientThread(() ->
+        boolean butlerIsTooFar = Microbot.getClientThread().runOnClientThreadOptional(() ->
                 butler.getWorldLocation().distanceTo(Microbot.getClient().getLocalPlayer().getWorldLocation()) > 3
-        );
+        ).orElse(false);
         if (butlerIsTooFar) {
             Rs2Tab.switchToSettingsTab();
             sleep(300, 900);

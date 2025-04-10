@@ -6,6 +6,7 @@ import net.runelite.client.plugins.microbot.util.Global;
 
 import java.awt.*;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * The {@code Rs2Random} class provides a variety of random number generation methods
@@ -378,7 +379,8 @@ public class Rs2Random {
      * @param dev  The standard deviation of the wait time.
      */
     public static void waitEx(double mean, double dev) {
-        wait(Math.abs(Math.round(gaussRand(mean, dev))), 0, EWaitDir.wdMean);
+        long waitTime = Math.abs(Math.round(gaussRand(mean, dev)));
+        systemWait(waitTime);
     }
 
     /**
@@ -388,6 +390,7 @@ public class Rs2Random {
      * @param time The duration to wait in milliseconds.
      */
     private static void systemWait(long time) {
+        log.info("Waiting for {} ms", time);
         Global.sleep((int) time);
     }
 
@@ -459,6 +462,38 @@ public class Rs2Random {
         }
     }
 
+    /**
+     * generate random number between min and max
+     * @param min
+     * @param max
+     * @return
+     */
+    public static int between(final int min, final int max) {
+        final int n = Math.abs(max - min);
+        return Math.min(min, max) + (n == 0 ? 0 : new java.util.Random().nextInt(n));
+    }
+
+    /**
+     * random gaussian
+     * @param mean
+     * @param stddev
+     * @return
+     */
+    public static int randomGaussian(double mean, double stddev) {
+        double u, v, s;
+        do {
+            u = 2.0 * ThreadLocalRandom.current().nextDouble() - 1.0;
+            v = 2.0 * ThreadLocalRandom.current().nextDouble() - 1.0;
+            s = u * u + v * v;
+        } while (s >= 1 || s == 0);
+        double multiplier = Math.sqrt(-2.0 * Math.log(s) / s);
+        int value = (int) (mean + stddev * u * multiplier);
+        if (value < 0)
+        {
+            value = 0;
+        }
+        return value;
+    }
 
     enum EWaitDir {
         wdLeft, wdMean, wdRight

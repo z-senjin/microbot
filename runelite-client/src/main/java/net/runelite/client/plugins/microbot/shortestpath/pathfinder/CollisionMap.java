@@ -1,14 +1,15 @@
 package net.runelite.client.plugins.microbot.shortestpath.pathfinder;
 
+import net.runelite.api.TileObject;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.shortestpath.Transport;
 import net.runelite.client.plugins.microbot.shortestpath.TransportType;
 import net.runelite.client.plugins.microbot.shortestpath.WorldPointUtil;
+import net.runelite.client.plugins.microbot.util.coords.Rs2WorldPoint;
+import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
+import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class CollisionMap {
     // Enum.values() makes copies every time which hurts performance in the hotpath
@@ -75,11 +76,31 @@ public class CollisionMap {
     private final List<Node> neighbors = new ArrayList<>(16);
     private final boolean[] traversable = new boolean[8];
 
+    public static final List<WorldPoint> ignoreCollision = Arrays.asList(
+            new WorldPoint(3142, 3457, 0),
+            new WorldPoint(3141, 3457, 0),
+            new WorldPoint(3142, 3457, 0),
+            new WorldPoint(3141, 3458, 0),
+            new WorldPoint(3141, 3456, 0),
+            new WorldPoint(3142, 3456, 0),
+            new WorldPoint(2744, 3153, 0),
+            new WorldPoint(2745, 3153, 0),
+            new WorldPoint(3674, 3882, 0),
+            new WorldPoint(3673, 3884, 0),
+            new WorldPoint(3673, 3885, 0),
+            new WorldPoint(3673, 3886, 0),
+            new WorldPoint(3672, 3888, 0),
+            new WorldPoint(3675, 3893, 0),
+            new WorldPoint(3678, 3893, 0),
+            new WorldPoint(3684, 3845, 0),
+            new WorldPoint(3670, 3836, 0),
+            new WorldPoint(3672, 3862, 0)
+    );
+
     public List<Node> getNeighbors(Node node, VisitedTiles visited, PathfinderConfig config, WorldPoint target) {
         final int x = WorldPointUtil.unpackWorldX(node.packedPosition);
         final int y = WorldPointUtil.unpackWorldY(node.packedPosition);
         final int z = WorldPointUtil.unpackWorldPlane(node.packedPosition);
-
 
         neighbors.clear();
 
@@ -91,9 +112,7 @@ public class CollisionMap {
         for (Transport transport : transports) {
             //START microbot variables
             if (visited.get(transport.getDestination())) continue;
-            if (config.isIgnoreTeleportAndItems() &&
-                    (transport.getType() == TransportType.TELEPORTATION_SPELL ||
-                            transport.getType() == TransportType.TELEPORTATION_ITEM)) continue;
+            if (config.isIgnoreTeleportAndItems() && TransportType.isTeleport(transport.getType())) continue;
 
             //EXCEPTION
             if (transport.getType() == TransportType.MINECART) {
@@ -104,8 +123,8 @@ public class CollisionMap {
                 }
             }
 
-            if (transport.getType() != TransportType.TRANSPORT) {
-                neighbors.add(new TransportNode(transport.getDestination(), node, config.getDistanceBeforeUsingTeleport(), transport.getType(), transport.getDisplayInfo()));
+            if (TransportType.isTeleport(transport.getType())) {
+                neighbors.add(new TransportNode(transport.getDestination(), node, config.getDistanceBeforeUsingTeleport() + transport.getDuration(), transport.getType(), transport.getDisplayInfo()));
             } else {
                 neighbors.add(new TransportNode(transport.getDestination(), node, transport.getDuration(), transport.getType(), transport.getDisplayInfo()));
             }
@@ -147,6 +166,30 @@ public class CollisionMap {
             if (visited.get(neighborPacked)) continue;
             if (config.getRestrictedPointsPacked().contains(neighborPacked)) continue;
             if (config.getCustomRestrictions().contains(neighborPacked)) continue;
+
+            if (ignoreCollision.contains(new WorldPoint(x, y, z))) {
+                neighbors.add(new Node(neighborPacked, node));
+                continue;
+            }
+
+            /**
+             * This piece of code is designed to allow web walker to be used in toa puzzle room
+             * it will dodge specific tiles in the sequence room
+             */
+            if (Rs2Player.getWorldLocation().getRegionID() == 14162) { //toa puzzle room
+                final int lx = WorldPointUtil.unpackWorldX(neighborPacked);
+                final int ly = WorldPointUtil.unpackWorldY(neighborPacked);
+                final int lz = WorldPointUtil.unpackWorldPlane(neighborPacked);
+                if (!Objects.equals(target, new WorldPoint(lx, ly, lz))) {
+                    WorldPoint globalWorldPoint = Rs2WorldPoint.convertInstancedWorldPoint(new WorldPoint(lx, ly, lz));
+                    if (globalWorldPoint != null) {
+                        TileObject go = Rs2GameObject.findGroundObjectByLocation(globalWorldPoint);
+                        if (go != null && go.getId() == 45340) {
+                            continue;
+                        }
+                    }
+                }
+            }
 
             if (traversable[i]) {
                 neighbors.add(new Node(neighborPacked, node));

@@ -97,10 +97,22 @@ public class Transport {
     @Getter
     private final Set<TransportVarbit> varbits = new HashSet<>();
 
+    /**
+     * Any varplayers to check for the transport to be valid. All must pass for a transport to be valid
+     */
     @Getter
-    private int amtItemRequired = 0;
+    private final Set<TransportVarPlayer> varplayers = new HashSet<>();
+    
     @Getter
-    private String itemRequired = "";
+    private String currencyName = "";
+    @Getter
+    private int currencyAmount = 0;
+
+    /**
+     * Transport requires player to be in a members world
+     */
+    @Getter
+    private boolean isMembers = false;
 
     /**
      * Creates a new transport from an origin-only transport
@@ -140,12 +152,16 @@ public class Transport {
         this.varbits.addAll(origin.varbits);
         this.varbits.addAll(destination.varbits);
 
+        this.varplayers.addAll(origin.varplayers);
+        this.varplayers.addAll(destination.varplayers);
+        
         //START microbot variables
         this.name = origin.getName();
         this.objectId = origin.getObjectId();
         this.action = origin.getAction();
-        this.amtItemRequired = origin.getAmtItemRequired();
-        this.itemRequired = origin.getItemRequired();
+        this.currencyName = origin.getCurrencyName();
+        this.currencyAmount = origin.getCurrencyAmount();
+        this.isMembers = origin.isMembers;
         //END microbot variables
     }
 
@@ -177,38 +193,36 @@ public class Transport {
 
         //START microbot variables
 
-        if ((value = fieldMap.get("menuOption menuTarget objectID")) != null) {
-            // Use a regular expression to capture the action, target, and objectId
-            String regex = "^([^\\s-]+(?:-[^ ]+)*)\\s+(.*?)\\s+(\\d+)$";
+        if ((value = fieldMap.get("menuOption menuTarget objectID")) != null && !value.trim().isEmpty()) {
+            value = value.trim(); // Remove leading/trailing spaces
+
+            // Regex pattern for semicolon-separated values
+            String regex = "^([^;]+);([^;]+);(\\d+)$";
             java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
             java.util.regex.Matcher matcher = pattern.matcher(value);
 
             if (matcher.matches()) {
-                action = matcher.group(1);   // First group: the action (e.g., "Travel")
-                name = matcher.group(2);   // Second group: the target (e.g., "Spirit tree")
-                objectId = Integer.parseInt(matcher.group(3)); // Third group: the objectId (e.g., "26263")
-            } else if (!value.isEmpty()){
-                System.out.println("failed to load transport " + value);
-            }
-
-            //EXCEPTIONS THAT ARE NOT HANDLED BY THE REGEX
-            //Shillo village cart action is: climb over without a dash
-            if (objectId == 2216) {
-                action = action.replace("-", " ");
+                // Extract matched groups
+                action = matcher.group(1).trim();   // First group: menuOption (action)
+                name = matcher.group(2).trim();    // Second group: menuTarget (name)
+                objectId = Integer.parseInt(matcher.group(3).trim()); // Third group: objectID
+            } else {
+                System.out.println("Skipped invalid value: " + value);
             }
         }
-        if ((value = fieldMap.get("Items")) != null) {
+        
+        if ((value = fieldMap.get("Currency")) != null) {
             // Split the string by space
-            String[] parts = value.split(" ");
+            String[] parts = value.split(DELIM);
             if (parts.length > 1) {
                 // Parse the first part as an integer amount
-                amtItemRequired = Integer.parseInt(parts[0]);
-                itemRequired = parts[1];
+                currencyAmount = Integer.parseInt(parts[0]);
+                currencyName = parts[1];
             }
         }
         //END microbot variables
 
-        if ((value = fieldMap.get("Skills")) != null) {
+        if ((value = fieldMap.get("Skills")) != null && !value.trim().isEmpty()) {
             String[] skillRequirements = value.split(DELIM_MULTI);
 
             for (String requirement : skillRequirements) {
@@ -231,7 +245,7 @@ public class Transport {
             }
         }
 
-        if ((value = fieldMap.get("Item IDs")) != null) {
+        if ((value = fieldMap.get("Item IDs")) != null && !value.trim().isEmpty()) {
             String[] itemIdsList = value.split(DELIM_MULTI);
             for (String listIds : itemIdsList) {
                 Set<Integer> multiitemList = new HashSet<>();
@@ -244,19 +258,18 @@ public class Transport {
             }
         }
 
-        if ((value = fieldMap.get("Quests")) != null) {
+        if ((value = fieldMap.get("Quests")) != null && !value.trim().isEmpty()) {
             this.quests = findQuests(value);
         }
 
-        if ((value = fieldMap.get("Duration")) != null && !value.isEmpty()) {
+        if ((value = fieldMap.get("Duration")) != null && !value.trim().isEmpty()) {
             this.duration = Integer.parseInt(value);
         }
-        if (TransportType.TELEPORTATION_ITEM.equals(transportType)
-                || TransportType.TELEPORTATION_SPELL.equals(transportType)) {
-            // Teleportation items and spells should always have a non-zero wait,
+
+        if (TransportType.isTeleport(transportType)) {
+            // Teleports should always have a non-zero wait,
             // so the pathfinder doesn't calculate the cost by distance
-            //MICROBOT - The reason we commented this out is to avoid using teleport items when being to close to the target
-            // this.duration = duration;
+            this.duration = Math.max(this.duration, 1);
         }
 
         if ((value = fieldMap.get("Display info")) != null) {
@@ -267,16 +280,71 @@ public class Transport {
             this.isConsumable = "T".equals(value) || "yes".equals(value.toLowerCase());
         }
 
-        if ((value = fieldMap.get("Wilderness level")) != null && !value.isEmpty()) {
+        if ((value = fieldMap.get("Wilderness level")) != null && !value.trim().isEmpty()) {
             this.maxWildernessLevel = Integer.parseInt(value);
         }
+        
+        if ((value = fieldMap.get("isMembers")) != null && !value.trim().isEmpty()) {
+            this.isMembers = "Y".equals(value.trim()) || "yes".equals(value.trim().toLowerCase());
+        }
 
-        if ((value = fieldMap.get("Varbits")) != null) {
+        if ((value = fieldMap.get("Varbits")) != null && !value.trim().isEmpty()) {
             for (String varbitCheck : value.split(DELIM_MULTI)) {
-                String[] varbitParts = varbitCheck.split(DELIM_STATE);
-                int varbitId = Integer.parseInt(varbitParts[0]);
-                int varbitValue = Integer.parseInt(varbitParts[1]);
-                varbits.add(new TransportVarbit(varbitId, varbitValue));
+                String[] parts;
+                TransportVarbit.Operator operator;
+
+                if (varbitCheck.contains(">")) {
+                    parts = varbitCheck.split(">");
+                    operator = TransportVarbit.Operator.GREATER_THAN;
+                } else if (varbitCheck.contains("<")) {
+                    parts = varbitCheck.split("<");
+                    operator = TransportVarbit.Operator.LESS_THAN;
+                } else if (varbitCheck.contains("=")) {
+                    parts = varbitCheck.split("=");
+                    operator = TransportVarbit.Operator.EQUAL;
+                } else if (varbitCheck.contains("&")) {
+                    parts = varbitCheck.split("&");
+                    operator = TransportVarbit.Operator.BIT_SET;
+                } else if (varbitCheck.contains("@")) {
+                    parts = varbitCheck.split("@");
+                    operator = TransportVarbit.Operator.COOLDOWN_MINUTES;
+                } else {
+                    throw new IllegalArgumentException("Invalid varbit format: " + varbitCheck);
+                }
+
+                int varbitId = Integer.parseInt(parts[0]);
+                int varbitValue = Integer.parseInt(parts[1]);
+                varbits.add(new TransportVarbit(varbitId, varbitValue, operator));
+            }
+        }
+
+        if ((value = fieldMap.get("Varplayers")) != null && !value.trim().isEmpty()) {
+            for (String varplayerCheck : value.split(DELIM_MULTI)) {
+                String[] parts;
+                TransportVarPlayer.Operator operator;
+
+                if (varplayerCheck.contains(">")) {
+                    parts = varplayerCheck.split(">");
+                    operator = TransportVarPlayer.Operator.GREATER_THAN;
+                } else if (varplayerCheck.contains("<")) {
+                    parts = varplayerCheck.split("<");
+                    operator = TransportVarPlayer.Operator.LESS_THAN;
+                } else if (varplayerCheck.contains("=")) {
+                    parts = varplayerCheck.split("=");
+                    operator = TransportVarPlayer.Operator.EQUAL;
+                } else if (varplayerCheck.contains("&")) {
+                    parts = varplayerCheck.split("&");
+                    operator = TransportVarPlayer.Operator.BIT_SET;
+                } else if (varplayerCheck.contains("@")) {
+                    parts = varplayerCheck.split("@");
+                    operator = TransportVarPlayer.Operator.COOLDOWN_MINUTES;
+                } else {
+                    throw new IllegalArgumentException("Invalid varplayer format: " + varplayerCheck);
+                }
+
+                int varplayerId = Integer.parseInt(parts[0]);
+                int varplayerValue = Integer.parseInt(parts[1]);
+                varplayers.add(new TransportVarPlayer(varplayerId, varplayerValue, operator));
             }
         }
 
@@ -306,7 +374,7 @@ public class Transport {
         Set<Quest> quests = new HashSet<>();
         for (String questName : questNames) {
             for (Quest quest : Quest.values()) {
-                if (quest.getName().equals(questName)) {
+                if (quest.getName().equalsIgnoreCase(questName.trim())) {
                     quests.add(quest);
                     break;
                 }
@@ -424,11 +492,14 @@ public class Transport {
         addTransports(transports, "gnome_gliders.tsv", TransportType.GNOME_GLIDER, 6);
         addTransports(transports, "minecarts.tsv", TransportType.MINECART);
         addTransports(transports, "spirit_trees.tsv", TransportType.SPIRIT_TREE, 5);
+        addTransports(transports, "quetzals.tsv", TransportType.QUETZAL, 6);
         addTransports(transports, "teleportation_items.tsv", TransportType.TELEPORTATION_ITEM);
+        addTransports(transports, "teleportation_minigames.tsv", TransportType.TELEPORTATION_MINIGAME);
         addTransports(transports, "teleportation_levers.tsv", TransportType.TELEPORTATION_LEVER);
         addTransports(transports, "teleportation_portals.tsv", TransportType.TELEPORTATION_PORTAL);
         addTransports(transports, "teleportation_spells.tsv", TransportType.TELEPORTATION_SPELL);
         addTransports(transports, "wilderness_obelisks.tsv", TransportType.WILDERNESS_OBELISK);
+        addTransports(transports, "magic_carpets.tsv", TransportType.MAGIC_CARPET);
         addTransports(transports, "npcs.tsv", TransportType.NPC);
         return transports;
     }
