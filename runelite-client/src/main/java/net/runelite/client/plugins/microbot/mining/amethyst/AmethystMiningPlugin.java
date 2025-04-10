@@ -63,6 +63,7 @@ public class AmethystMiningPlugin extends Plugin {
         WallObject wallObject = event.getWallObject();
         if (wallObject == null)
             return;
+
         if (AmethystMiningScript.status == Status.MINING && wallObject.getId() == ObjectID.EMPTY_WALL) {
             if (AmethystMiningScript.oreVein != null) {
                 if (wallObject.getWorldLocation().equals(AmethystMiningScript.oreVein.getWorldLocation())) {

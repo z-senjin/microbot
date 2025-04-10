@@ -13,7 +13,7 @@ public interface MossKillerConfig extends Config {
             position = 0
     )
     default String GUIDE() {
-        return "Have runes for teleport to varrock, lobsters, and bronze axe in bank. Start script in varrock west bank with armor and weapon equipped.";
+        return "Have runes for teleport to varrock,ame lobsters, and bronze axe in bank. Start script in varrock west bank with armor and weapon equipped.";
     }
     @ConfigItem(
             keyName = "keyThreshold",
@@ -25,4 +25,37 @@ public interface MossKillerConfig extends Config {
     {
         return 30;
  }
+
+    @ConfigItem(
+            keyName = "wildyMode",
+            name = "Kill Wildy Moss Giants?",
+            description = "Turn off Wilderness Warnings. Start in Ferox Enclave. Have all items equipped. It will save and deposit what is not needed.",
+            position = 0
+    )
+    default boolean wildyMode()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "hopWhenPlayerIsNear",
+            name = "Hop worls when players are near?",
+            description = "Hop worlds when players are near you fighting moss giants.",
+            position = 1
+    )
+    default boolean hopWhenPlayerIsNear()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "isSlashWeaponEquipped",
+            name = "Slash Weapon Equipped?",
+            description = "Do you have a slash weapon equipped for spiders web? If False, have knife in bank.",
+            position = 0
+    )
+    default boolean isSlashWeaponEquipped()
+    {
+        return true;
+    }
 }
