@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.mntn.MossKiller;
+package net.runelite.client.plugins.microbot.mntn.MntnPker;
 
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -9,10 +9,10 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 import javax.inject.Inject;
 import java.awt.*;
 
-public class MossKillerOverlay extends OverlayPanel {
+public class MntnPkerOverlay extends OverlayPanel {
 
     @Inject
-    MossKillerOverlay(MossKillerPlugin plugin)
+    MntnPkerOverlay(MntnPkerPlugin plugin)
     {
         super(plugin);
         setPosition(OverlayPosition.TOP_LEFT);
@@ -23,7 +23,7 @@ public class MossKillerOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("MossGiantKiller V1.0.0")
+                    .text("Micro Example V1.0.0")
                     .color(Color.GREEN)
                     .build());
 

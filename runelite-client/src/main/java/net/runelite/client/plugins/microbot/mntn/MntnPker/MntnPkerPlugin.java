@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.mntn.MossKiller;
+package net.runelite.client.plugins.microbot.mntn.MntnPker;
 
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
@@ -13,27 +13,27 @@ import javax.inject.Inject;
 import java.awt.*;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Mntn + "Moss Killer",
-        description = "Microbot example plugin",
-        tags = {"example", "microbot"},
+        name = PluginDescriptor.Mntn + "Pker",
+        description = "Pk Helper Plugin",
+        tags = {"pker", "mntn"},
         enabledByDefault = false
 )
 @Slf4j
-public class MossKillerPlugin extends Plugin {
+public class MntnPkerPlugin extends Plugin {
     @Inject
-    private MossKillerConfig config;
+    private MntnPkerConfig config;
     @Provides
-    MossKillerConfig provideConfig(ConfigManager configManager) {
-        return configManager.getConfig(MossKillerConfig.class);
+    MntnPkerConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(MntnPkerConfig.class);
     }
 
     @Inject
     private OverlayManager overlayManager;
     @Inject
-    private MossKillerOverlay exampleOverlay;
+    private MntnPkerOverlay exampleOverlay;
 
     @Inject
-    MossKillerScript exampleScript;
+    MntnPkerScript mntnPkerScript;
 
 
     @Override
@@ -41,11 +41,11 @@ public class MossKillerPlugin extends Plugin {
         if (overlayManager != null) {
             overlayManager.add(exampleOverlay);
         }
-        exampleScript.run(config);
+        mntnPkerScript.run(config);
     }
 
     protected void shutDown() {
-        exampleScript.shutdown();
+        mntnPkerScript.shutdown();
         overlayManager.remove(exampleOverlay);
     }
     int ticks = 10;
