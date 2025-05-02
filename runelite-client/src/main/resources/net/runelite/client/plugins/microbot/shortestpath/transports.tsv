@@ -1601,7 +1601,11 @@
 2526 3172 1	2526 3172 0	Climb-down;Ladder;16679									
 2526 3172 0	2526 3172 1	Climb-up;Ladder;17026									
 2525 3171 1	2525 3171 0	Climb-down;Ladder;16679									
-											
+
+# Combat Training Camp
+2522 3375 0	2523 3375 0	Squeeze-through;Loose Railing;19171
+2523 3375 0	2522 3375 0	Squeeze-through;Loose Railing;19171
+
 # Tree Gnome Stronghold											
 2449 3463 0	2449 3463 1	Climb-up;Ladder;16683									
 2449 3463 1	2449 3463 0	Climb-down;Ladder;16679									
@@ -1839,30 +1843,30 @@
 2467 3491 0	2466 3493 0	Open;Tree Door;1968								10	
 2464 3493 0	2465 3491 0	Open;Tree Door;1967								10	
 2464 3491 0	2465 3493 0	Open;Tree Door;1967								10	
-2466 3494 0	2466 3494 1	Climb-up;Ladder;16683									
-2466 3494 1	2466 3494 0	Climb-down;Ladder;16684									
-2465 3495 0	2465 3495 1	Climb-up;Ladder;16683									
-2465 3495 1	2465 3495 0	Climb-down;Ladder;16684									
-2466 3496 0	2466 3496 1	Climb-up;Ladder;16683									
-2466 3496 1	2466 3496 0	Climb-down;Ladder;16684									
-2467 3495 0	2467 3495 1	Climb-up;Ladder;16683									
-2467 3495 1	2467 3495 0	Climb-down;Ladder;16684									
-2467 3495 1	2467 3495 2	Climb-up;Ladder;16684									
-2467 3495 2	2467 3495 3	Climb-up;Ladder;2884									
-2467 3495 3	2467 3495 2	Climb-down;Ladder;16679									
-2467 3495 2	2467 3495 1	Climb-down;Ladder;2884									
-2466 3496 1	2466 3496 2	Climb-up;Ladder;16684									
-2466 3496 2	2466 3496 1	Climb-down;Ladder;2884									
-2465 3495 1	2465 3495 2	Climb-up;Ladder;16684									
-2465 3495 2	2465 3495 1	Climb-down;Ladder;2884									
-2466 3494 1	2466 3494 2	Climb-up;Ladder;16684									
-2466 3494 2	2466 3494 1	Climb-down;Ladder;2884									
-2466 3494 2	2466 3494 3	Climb-up;Ladder;2884									
-2466 3494 3	2466 3494 2	Climb-down;Ladder;16679									
-2465 3495 2	2465 3495 3	Climb-up;Ladder;2884									
-2465 3495 3	2465 3495 2	Climb-down;Ladder;16679									
-2466 3496 2	2466 3496 3	Climb-up;Ladder;2884									
-2466 3496 3	2466 3496 2	Climb-down;Ladder;16679									
+2466 3494 0	2466 3494 1	Climb-up;Ladder;4458									
+2466 3494 1	2466 3494 0	Climb-down;Ladder;56233
+2465 3495 0	2465 3495 1	Climb-up;Ladder;4458									
+2465 3495 1	2465 3495 0	Climb-down;Ladder;56233
+2466 3496 0	2466 3496 1	Climb-up;Ladder;4458									
+2466 3496 1	2466 3496 0	Climb-down;Ladder;56233
+2467 3495 0	2467 3495 1	Climb-up;Ladder;4458									
+2467 3495 1	2467 3495 0	Climb-down;Ladder;56233
+2467 3495 1	2467 3495 2	Climb-up;Ladder;56233
+2467 3495 2	2467 3495 3	Climb-up;Ladder;56232									
+2467 3495 3	2467 3495 2	Climb-down;Ladder;56229									
+2467 3495 2	2467 3495 1	Climb-down;Ladder;56232									
+2466 3496 1	2466 3496 2	Climb-up;Ladder;56233
+2466 3496 2	2466 3496 1	Climb-down;Ladder;56232									
+2465 3495 1	2465 3495 2	Climb-up;Ladder;56233
+2465 3495 2	2465 3495 1	Climb-down;Ladder;56232									
+2466 3494 1	2466 3494 2	Climb-up;Ladder;56233
+2466 3494 2	2466 3494 1	Climb-down;Ladder;56232									
+2466 3494 2	2466 3494 3	Climb-up;Ladder;56232									
+2466 3494 3	2466 3494 2	Climb-down;Ladder;56229									
+2465 3495 2	2465 3495 3	Climb-up;Ladder;56232									
+2465 3495 3	2465 3495 2	Climb-down;Ladder;56229									
+2466 3496 2	2466 3496 3	Climb-up;Ladder;56232									
+2466 3496 3	2466 3496 2	Climb-down;Ladder;56229									
 2464 3497 0	2464 9897 0	Open;Trapdoor;2446									
 2464 9897 0	2464 3497 0	Climb-up;Ladder;17385									
 2467 9903 0	2467 9905 0	Push;Roots;2451									
@@ -5007,4 +5011,10 @@
 2723 3374 0	2727 9774 0	Climb-down;Staircase;16664									
 2723 3375 0	2727 9775 0	Climb-down;Staircase;16664									
 2727 9774 0	2723 3374 0	Climb-up;Staircase;16665									
-2727 9775 0	2723 3375 0	Climb-up;Staircase;16664									
+2727 9775 0	2723 3375 0	Climb-up;Staircase;16664
+
+# MYTH GUILD
+2457 2849 0	1936 9009 1	Enter;Mythic Statue;31626
+1936 9009 1	2457 2849 0	Climb-up;Ladder;32205
+1939 8968 1	2445 2818 0	Enter;Cave;31807
+2445 2818 0	1939 8968 1	Enter;Cave entrance;31606
