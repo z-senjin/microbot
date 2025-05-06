@@ -1,10 +1,6 @@
 package net.runelite.client.plugins.microbot.bee.MossKiller;
 
-import net.runelite.api.MenuAction;
-import net.runelite.api.Perspective;
-import net.runelite.api.Point;
 import net.runelite.api.Skill;
-import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.PluginInstantiationException;
 import net.runelite.client.plugins.microbot.Microbot;
@@ -17,19 +13,15 @@ import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.camera.Rs2Camera;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
-import net.runelite.client.plugins.microbot.util.coords.Rs2LocalPoint;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
 import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
-import net.runelite.client.plugins.microbot.util.grounditem.InteractModel;
 import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Magic;
 import net.runelite.client.plugins.microbot.util.math.Rs2Random;
-import net.runelite.client.plugins.microbot.util.menu.NewMenuEntry;
-import net.runelite.client.plugins.microbot.util.models.RS2Item;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
@@ -38,7 +30,6 @@ import net.runelite.client.plugins.microbot.util.security.Login;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.skillcalculator.skills.MagicAction;
 
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -120,7 +111,6 @@ public class MossKillerScript extends Script {
             "Bryophyta's essence",
             "Mossy key"
     };
-
     public MossKillerState state = MossKillerState.BANK;
 
 
@@ -148,12 +138,13 @@ public class MossKillerScript extends Script {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
-//                lootBoss();
 
                 if(!isStarted){
                     init();
                 }
 
+                Microbot.log(String.valueOf(state));
+                Microbot.log("BossMode: " + bossMode);
                 if (bossMode && Rs2AntibanSettings.actionCooldownChance > 0.05) {
                     Rs2AntibanSettings.actionCooldownChance = 0.00;
                 } else if (!bossMode && Rs2AntibanSettings.actionCooldownChance < 0.06){
@@ -170,7 +161,6 @@ public class MossKillerScript extends Script {
                 if (Rs2Player.getRealSkillLevel(Skill.STRENGTH) >= config.strengthLevel()) {
                     moarShutDown();
                 }
-
 
                 switch(state){
                     case BANK: handleBanking(); break;
@@ -473,12 +463,12 @@ public class MossKillerScript extends Script {
 
         if (Rs2Npc.getNpc("Bryophyta") == null) {
             Microbot.log("Boss is dead, let's loot.");
-            Microbot.log("Sleeping for 3-5 seconds for loot to appear");
-            sleep(3000, 5000);
+            Microbot.log("Sleeping for 2-5 seconds for loot to appear");
+            sleep(2000, 5000);
 
             Microbot.log("attempting to take loot");
             lootBoss();
-            sleep(3000, 5000);
+            sleep(2000, 5000);
 
             Microbot.log("Moving to TELEPORT state");
             state = MossKillerState.TELEPORT;
@@ -489,60 +479,8 @@ public class MossKillerScript extends Script {
         }
     }
 
-    public static boolean walkFastCanvas(WorldPoint worldPoint, boolean toggleRun) {
-
-        Rs2Player.toggleRunEnergy(toggleRun);
-        Point canv;
-        LocalPoint localPoint = LocalPoint.fromWorld(Microbot.getClient().getTopLevelWorldView(), worldPoint);
-
-        if (Microbot.getClient().getTopLevelWorldView().isInstance() && localPoint == null) {
-            localPoint = Rs2LocalPoint.fromWorldInstance(worldPoint);
-        }
-
-        if (localPoint == null) {
-            Microbot.log("Tried to walk worldpoint " + worldPoint + " using the canvas but localpoint returned null");
-            return false;
-        }
-
-        canv = Perspective.localToCanvas(Microbot.getClient(), localPoint, Microbot.getClient().getTopLevelWorldView().getPlane());
-
-        int canvasX = canv != null ? canv.getX() : -1;
-        int canvasY = canv != null ? canv.getY() : -1;
-
-        //if the tile is not on screen, use minimap
-        if (!Rs2Camera.isTileOnScreen(localPoint) || canvasX < 0 || canvasY < 0) {
-            return Rs2Walker.walkMiniMap(worldPoint);
-        }
-
-        Microbot.doInvoke(new NewMenuEntry(canvasX, canvasY, MenuAction.WALK.getId(), 0, 0, "Take"), new Rectangle(canvasX, canvasY, Microbot.getClient().getCanvasWidth(), Microbot.getClient().getCanvasHeight()));
-        return true;
-    }
-
-
     public void lootBoss() {
         Microbot.log("Looting boss");
-//        int lootCounter = 0;
-//        int randInt = Rs2Random.between(7, 12);
-//        for (int i = 0; i < randInt; i++) {
-//            if(lootCounter >= 3){
-//                break;
-//            }
-//            if(Rs2Inventory.isFull()){
-//                Rs2Player.eatAt(0);
-//            }
-//            int currentInventoryCount = Rs2Inventory.count();
-//            LocalPoint localPoint = LocalPoint.fromWorld(Microbot.getClient().getTopLevelWorldView(), MossKillerPlugin.bryoTile);
-//            if (localPoint == null) {
-//                localPoint = Rs2LocalPoint.fromWorldInstance(MossKillerPlugin.bryoTile);
-//            }
-//            Point canvasPoint = Perspective.localToCanvas(Microbot.getClient(), localPoint, Microbot.getClient().getPlane());
-//            Microbot.getMouse().move(canvasPoint);
-//            Microbot.getMouse().click(canvasPoint, false);
-//            sleepUntil(() -> !Rs2Player.isMoving() && (currentInventoryCount != Rs2Inventory.count()), 3000);
-//            if(currentInventoryCount == Rs2Inventory.count()){
-//                lootCounter += 1;
-//            }
-//        }
         LootingParameters bossLootParams = new LootingParameters(
                 10,
                 1,
@@ -722,10 +660,13 @@ public class MossKillerScript extends Script {
                 return;
             }
             int keyTotal = Rs2Bank.count("Mossy key");
+            Microbot.log("Key Total: " + keyTotal);
             if (keyTotal >= config.keyThreshold()){
+                Microbot.log("keyTotal >= config threshold");
                 bossMode = true;
                 Rs2Bank.withdrawItem(MOSSY_KEY);
                 // Rs2Bank.withdrawOne(MOSSY_KEY);
+                Microbot.log("Sleeping until mossy key");
                 sleepUntil(() -> Rs2Inventory.contains(MOSSY_KEY));
                 sleep(1000, 1300);
                 Rs2Bank.withdrawOne(BRONZE_AXE);
@@ -740,6 +681,7 @@ public class MossKillerScript extends Script {
                 sleep(1000, 1300);
 
             } else if(bossMode && keyTotal > 0) {
+                Microbot.log("bossMode and keyTotal > 0");
                 Rs2Bank.withdrawOne(MOSSY_KEY);
                 sleepUntil(() -> Rs2Inventory.contains(MOSSY_KEY));
                 sleep(1000, 1300);
@@ -779,6 +721,11 @@ public class MossKillerScript extends Script {
             }
 
 
+        }
+
+        if(!Rs2Bank.openBank()) {
+            Rs2Bank.walkToBank();
+            Rs2Bank.walkToBankAndUseBank();
         }
     }
 
