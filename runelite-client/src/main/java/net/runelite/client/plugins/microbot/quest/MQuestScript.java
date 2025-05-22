@@ -41,6 +41,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -76,6 +77,8 @@ public class MQuestScript extends Script {
                 if (!super.run()) return;
                 if (getQuestHelperPlugin().getSelectedQuest() == null) return;
 
+//                Microbot.log("Current Quest: " + getQuestHelperPlugin().getSelectedQuest());
+
                 if (Rs2Player.isAnimating())
                     Rs2Player.waitForAnimation();
 
@@ -95,12 +98,28 @@ public class MQuestScript extends Script {
                         if (choice.getExcludedStrings() != null && choice.getExcludedStrings().stream().anyMatch(Rs2Widget::hasWidget))
                             continue;
 
+                        int dialogChoiceIndex = 0;
                         for (var dialogChoice : dialogChoices) {
+                            var currentChoiceText = dialogChoice.getText();
+                            Microbot.log("Dialog choice: " + currentChoiceText);
+                            if (dialogChoiceIndex + 1 < dialogChoices.length) {
+                                var nextChoiceText = dialogChoices[dialogChoiceIndex + 1].getText();
+                                Microbot.log("Next Choice: " + dialogChoices[dialogChoiceIndex + 1].getText());
+                                if(Objects.equals(currentChoiceText, "Yes.") && Objects.equals(nextChoiceText, "No.")){
+                                    Rs2Keyboard.keyPress(dialogChoice.getOnKeyListener()[7].toString().charAt(0));
+                                    return;
+                                }
+                            } else {
+                                Microbot.log("Next Choice: None");
+                            }
+
                             if (dialogChoice.getText().endsWith(choice.getChoice())) {
                                 Rs2Keyboard.keyPress(dialogChoice.getOnKeyListener()[7].toString().charAt(0));
                                 return;
                             }
+                            dialogChoiceIndex++;
                         }
+
                     }
                 }
 

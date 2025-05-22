@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.mntn.AccountBuilder;
+package net.runelite.client.plugins.microbot.mntn.MntnSlayer;
 
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayPanel;
@@ -9,10 +9,10 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 import javax.inject.Inject;
 import java.awt.*;
 
-public class AccountBuilderOverlay extends OverlayPanel {
+public class MntnSlayerOverlay extends OverlayPanel {
 
     @Inject
-    AccountBuilderOverlay(AccountBuilderPlugin plugin)
+    MntnSlayerOverlay(MntnSlayerPlugin plugin)
     {
         super(plugin);
         setPosition(OverlayPosition.TOP_LEFT);
@@ -23,8 +23,8 @@ public class AccountBuilderOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Mntn Account Builder V1.0.0")
-                    .color(Color.CYAN)
+                    .text("Micro Example V1.0.0")
+                    .color(Color.GREEN)
                     .build());
 
             panelComponent.getChildren().add(LineComponent.builder().build());
