@@ -3,11 +3,16 @@ package net.runelite.client.plugins.microbot.mntn.MntnSlayer;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 
+import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
 public class MntnSlayerScript extends Script {
+    private final MntnSlayerPlugin plugin;
 
-    public static boolean test = false;
+    @Inject
+    public MntnSlayerScript(MntnSlayerPlugin plugin){
+        this.plugin = plugin;
+    }
 
     public boolean run(MntnSlayerConfig config) {
         Microbot.enableAutoRunOn = false;
@@ -17,7 +22,7 @@ public class MntnSlayerScript extends Script {
                 if (!super.run()) return;
                 long startTime = System.currentTimeMillis();
 
-                // CODE HERE
+                plugin.loop();
 
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;

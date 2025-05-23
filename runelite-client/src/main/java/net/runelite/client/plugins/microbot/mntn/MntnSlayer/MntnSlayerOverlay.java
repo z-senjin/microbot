@@ -23,8 +23,8 @@ public class MntnSlayerOverlay extends OverlayPanel {
         try {
             panelComponent.setPreferredSize(new Dimension(200, 300));
             panelComponent.getChildren().add(TitleComponent.builder()
-                    .text("Micro Example V1.0.0")
-                    .color(Color.GREEN)
+                    .text("Mntn Slayer V1.0.0")
+                    .color(Color.BLUE)
                     .build());
 
             panelComponent.getChildren().add(LineComponent.builder().build());
