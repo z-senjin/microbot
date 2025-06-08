@@ -87,6 +87,7 @@ public enum SlayerTaskMonster {
     RED_DRAGON("Red dragon", 1, new String[]{"Brimhaven Dungeon", "Catacombs of Kourend (brutal variant)"}, new String[]{"Anti-dragon shield", "Dragonfire shield", "Antifire potion(4)"}, new String[]{"Draconic", "Fiery"}, new String[]{"Melee", "Dragonfire"}, new String[]{"Baby red dragons", "Brutal red dragons"}, new String[]{"Konar quo Maten", "Nieve", "Duradel"}),
     REVENANT("Revenant", 1, new String[]{"Revenant Caves"}, new String[]{"None"}, new String[]{"Undead"}, new String[]{"Melee", "Ranged", "Magic"}, new String[]{"None"}, new String[]{"Krystilia"}),
     ROCKSLUG("Rockslug", 20, new String[]{"Fremennik Slayer Dungeon", "Lumbridge Swamp Caves", "Dorgesh-Kaan South Dungeon"}, new String[]{"Bag of salt"}, new String[]{"None"}, new String[]{"Melee"}, new String[]{"None"}, new String[]{"Mazchna", "Vannaka"}),
+    ROCK_CRAB("Rock crab", 1, new String[]{}, new String[]{}, new String[]{}, new String[]{}, new String[]{}, new String[]{"Mazchna", "Vannaka"}),
     ROGUE("Rogue", 1, new String[]{"Rogues' Castle", "southwest of Mage Arena"}, new String[]{"None"}, new String[]{"None"}, new String[]{"Melee"}, new String[]{"None"}, new String[]{"Krystilia"}),
     RUNE_DRAGON("Rune Dragon", 1, new String[]{"Lithkren"}, new String[]{"Anti-dragon shield", "Dragonfire shield", "Super antifire potion(4)"}, new String[]{"Draconic", "Fiery"}, new String[]{"Slash", "Ranged", "Magic", "Dragonfire"}, new String[]{"None"}, new String[]{"Konar quo Maten", "Nieve", "Duradel"}),
     SCABARITE("Scabarite", 1, new String[]{"Dungeon under Sophanem", "dungeon east of the Agility Pyramid"}, new String[]{"None"}, new String[]{"Kalphite"}, new String[]{"Melee", "Magic", "Ranged"}, new String[]{"Locust riders", "Scarab mages", "Scarab swarms"}, new String[]{"Nieve"}),
@@ -107,6 +108,7 @@ public enum SlayerTaskMonster {
     TUROTH("Turoth", 55, new String[]{"Fremennik Slayer Dungeon"}, new String[]{"Leaf-bladed spear", "Magic Dart", "Broad arrows", "Broad bolts"}, new String[]{"Leafy"}, new String[]{"Melee"}, new String[]{"None"}, new String[]{"Vannaka", "Chaeldar", "Konar quo Maten", "Nieve"}),
     TZHAAR("TzHaar", 1, new String[]{"Mor Ul Rek"}, new String[]{"None"}, new String[]{"None"}, new String[]{"Melee", "Ranged", "Magic"}, new String[]{"TzTok-Jad", "TzKal-Zuk"}, new String[]{"Chaeldar", "Nieve", "Duradel"}),
     VAMPYRE("Vampyre", 1, new String[]{"God Wars Dungeon", "Wilderness God Wars Dungeon", "Haunted Woods", "near Abandoned Mine"}, new String[]{"None"}, new String[]{"Vampyre"}, new String[]{"Melee"}, new String[]{"None"}, new String[]{"Mazchna", "Vannaka"}),
+    FERAL_VAMPYRE("Feral Vampyre", 1, new String[]{"God Wars Dungeon", "Wilderness God Wars Dungeon", "Haunted Woods", "near Abandoned Mine"}, new String[]{"None"}, new String[]{"Vampyre"}, new String[]{"Melee", "Poison"}, new String[]{"None"}, new String[]{"Mazchna", "Vannaka"}),
     WALL_BEAST("Wall beast", 35, new String[]{"Lumbridge Swamp Caves"}, new String[]{"Spiny helmet", "Slayer helmet"}, new String[]{"None"}, new String[]{"Melee"}, new String[]{"None"}, new String[]{"Mazchna", "Vannaka", "Chaeldar"}),
     WATERFIEND("Waterfiend", 1, new String[]{"Ancient Cavern", "Kraken Cove"}, new String[]{"None"}, new String[]{"None"}, new String[]{"Magic", "Magical ranged"}, new String[]{"None"}, new String[]{"Konar quo Maten", "Duradel"}),
     WEREWOLF("Werewolf", 1, new String[]{"Canifis", "God Wars Dungeon", "Wilderness God Wars Dungeon"}, new String[]{"None"}, new String[]{"None"}, new String[]{"Melee"}, new String[]{"None"}, new String[]{"Vannaka"}),
@@ -203,12 +205,12 @@ public enum SlayerTaskMonster {
     // Get monster by name
     public static SlayerTaskMonster getMonsterByName(String monster) {
         for (SlayerTaskMonster task : SlayerTaskMonster.values()) {
-            if (task.getMonster().equals(monster)) {
+            if (task.getMonster().equalsIgnoreCase(monster)) {
                 return task;
             }
             // check for alternatives
             for (String alternative : task.getAlternatives()) {
-                if (alternative.equals(monster)) {
+                if (alternative.equalsIgnoreCase(monster)) {
                     return task;
                 }
             }

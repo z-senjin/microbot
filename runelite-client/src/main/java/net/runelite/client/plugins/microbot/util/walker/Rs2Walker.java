@@ -616,9 +616,7 @@ public class Rs2Walker {
      * @return
      */
     public static boolean canReach(WorldPoint worldPoint) {
-        if (ShortestPathPlugin.getPathfinderConfig().getTransports().isEmpty()) {
-            ShortestPathPlugin.getPathfinderConfig().refresh();
-        }
+        ShortestPathPlugin.getPathfinderConfig().refresh();
         Pathfinder pathfinder = new Pathfinder(ShortestPathPlugin.getPathfinderConfig(), Rs2Player.getWorldLocation(), worldPoint);
         pathfinder.run();
         List<WorldPoint> path = pathfinder.getPath();
