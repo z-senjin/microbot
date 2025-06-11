@@ -12,7 +12,7 @@ public enum MntnSlayerMonster {
     ZOMBIE("Zombie", 1, "Zombies", new WorldPoint[]{new WorldPoint(3147, 9903, 0)}, null, null, null, false),
     DWARF("Dwarf", 1, "Dwarves", new WorldPoint[]{new WorldPoint(3000, 9809, 0)}, null, null, null, false),
     BAT("Bat", 1, "Bats", new WorldPoint[]{new WorldPoint(3368, 3494, 0)}, null, null, null, false),
-    MONKEY("Monkey", 1, "Monkeys", new WorldPoint[]{new WorldPoint(2879, 3155, 0)}, null, null, null, false),
+    MONKEY("Monkey", 1, "Monkeys", new WorldPoint[]{new WorldPoint(2879, 3155, 0)}, new String[]{"Coins"}, null, null, false),
     GHOST("Ghost", 1, "Ghosts", new WorldPoint[]{new WorldPoint(1691, 10063, 0)}, null, null, null, false),
     KALPHITE("Kalphite Worker", 1, "Kalphite", new WorldPoint[]{new WorldPoint(3325, 9500, 0)}, new String[]{"Rope", "Shantay pass"}, null, null, false),
     BEAR("Grizzly bear", 1, "Bears", new WorldPoint[]{new WorldPoint(2706, 3338, 0)}, new String[]{"Rope", "Shantay pass"}, null, null, false),
@@ -29,8 +29,8 @@ public enum MntnSlayerMonster {
     ICEFIEND("Icefiend", 1, "Icefiends", new WorldPoint[]{new WorldPoint(3007, 3477, 0)}, null, null, null, false),
     SKELETON("Skeleton", 1, "Skeletons", new WorldPoint[]{new WorldPoint(3098, 9909, 0)}, null, null, null, false),
     GIANT_RAT("Giant rat", 1, "Rats", new WorldPoint[]{new WorldPoint(3201, 3192, 0)}, null, null, null, false),
-    SEAGULL("Seagull", 1, "Birds", new WorldPoint[]{new WorldPoint(3028, 3236, 0)}, null, null, null, false);
-
+    SEAGULL("Seagull", 1, "Birds", new WorldPoint[]{new WorldPoint(3028, 3236, 0)}, null, null, null, false),
+    COW("Cow", 1, "Cows", new WorldPoint[]{new WorldPoint(3202, 3293, 0)}, null, null, null, false);
 
 
 

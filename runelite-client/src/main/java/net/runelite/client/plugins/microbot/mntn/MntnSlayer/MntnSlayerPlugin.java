@@ -153,14 +153,12 @@ public class MntnSlayerPlugin extends Plugin {
                 Microbot.log("Getting task, walking to slayer master");
                 if(!Rs2Player.isRunEnabled()) Rs2Player.toggleRunEnergy(true);
                 Rs2Slayer.walkToSlayerMaster(currentSlayerMaster.getRuneliteSlayerMaster());
-                Microbot.log("Getting assignment from slayer master NPC.");
                 Rs2Npc.interact(currentSlayerMaster.getRuneliteSlayerMaster().getName(), "Assignment");
                 if(Rs2Dialogue.isInDialogue()){
                     Rs2Dialogue.clickContinue();
                     Rs2Random.wait(400, 1000);
                     if(Rs2Slayer.hasSlayerTask()){
-                        state = MntnSlayerState.BANK;
-                        return;
+                        getTaskDetails();
                     }
                 }
                 // find slayer master from config and check level to see if able (level and quest requirements)
@@ -174,7 +172,6 @@ public class MntnSlayerPlugin extends Plugin {
 
                 break;
             case BANK:
-                Microbot.log("BANKING - current task location" + currentTaskLocation);
                 if(currentTaskLocation == null || currentTask == null){
                     state = MntnSlayerState.INITIALIZING;
                     return;
@@ -188,9 +185,7 @@ public class MntnSlayerPlugin extends Plugin {
                 Microbot.log("Walking to bank.");
                 Rs2Bank.walkToBank();
 
-                Microbot.log("Is near bank? " + Rs2Bank.isNearBank(15));
                 if(!Rs2Bank.isNearBank(15)){
-                    Microbot.log("!Rs2Bank.isNearBank is true...");
                     return;
                 }
                 Microbot.log("Opening bank");
@@ -200,7 +195,6 @@ public class MntnSlayerPlugin extends Plugin {
 
                 if(!Rs2Bank.isOpen()) return;
 
-                Microbot.log("Bank is open, lets gear up.");
                 String combatGear = "";
 
                 switch(currentCombatType){
@@ -216,14 +210,10 @@ public class MntnSlayerPlugin extends Plugin {
                 }
 
                 Rs2Bank.depositAll();
-                Microbot.log("depositing all.");
                 sleepUntil(Rs2Inventory::isEmpty, 500);
-
-                Microbot.log("Everything deposited, lets go");
 
 
                 List<Transport> teleports = Rs2Slayer.prepareItemTransports(currentTaskLocation);
-                Microbot.log("Transports amount: " + teleports.size());
                 if (!teleports.isEmpty()) {
                     outerLoop:
                     for (Transport t : teleports) {
@@ -253,7 +243,6 @@ public class MntnSlayerPlugin extends Plugin {
                     List<String> shuffledGearList = new ArrayList<>(Arrays.asList(combatGear.split(",\\s*")));
                     Collections.shuffle(shuffledGearList);
                     for (String gearItem: shuffledGearList){
-//                    Microbot.log("Grabbing " + gearItem);
                         Rs2Bank.withdrawAndEquip(gearItem);
                         sleepUntil(() -> Rs2Equipment.hasEquippedContains(gearItem), 2000);
                     }
@@ -268,13 +257,17 @@ public class MntnSlayerPlugin extends Plugin {
                         return;
                     }
 
+                    Microbot.log("Grabbing " + reqItem);
+
                     //TODO: check if item is a HEAD wearable and see if we have slayer helm already on
                     if(Arrays.asList(wearableSlayerItems).contains(reqItem)){
                         Rs2Bank.withdrawAndEquip(reqItem);
                         sleepUntil(() -> Rs2Equipment.hasEquippedContains(reqItem), 2000);
                     } else {
-                        Rs2Bank.withdrawX(reqItem, 1);
-                        sleepUntil(() -> Rs2Inventory.contains(reqItem), 500);
+
+                            Rs2Bank.withdrawX(reqItem, Objects.equals(reqItem, "Coins") ? 5000 : 1);
+                            sleepUntil(() -> Rs2Inventory.contains(reqItem), 500);
+
                     }
 
 
@@ -314,7 +307,7 @@ public class MntnSlayerPlugin extends Plugin {
                     return;
                 }
                 Microbot.log("Getting teleports");
-                Rs2Bank.withdrawOne(config.TeleportType().getName());
+                Rs2Bank.withdrawX(config.TeleportType().getName(), 3);
                 sleepUntil(() -> Rs2Inventory.contains(config.TeleportType().getName()), 1000);
                 if(currentTask.isPoisonous() && Rs2Bank.hasItem(Arrays.asList("Superantipoison", "Antipoison"))){
                     if(!Rs2Bank.withdrawX("Superantipoison", 2)){
@@ -406,6 +399,7 @@ public class MntnSlayerPlugin extends Plugin {
                     // set state to FIGHTING
             case FIGHTING:
 
+                Microbot.log("Task monsters left:" + Rs2Slayer.getSlayerTaskSize());
                 if(Rs2Slayer.getSlayerTaskSize() == 0){
                     state = MntnSlayerState.TELEPORT;
                     return;
@@ -564,6 +558,7 @@ public class MntnSlayerPlugin extends Plugin {
                 if(Rs2Inventory.contains(config.TeleportType().getName())){
                     Rs2Inventory.interact(config.TeleportType().getName(), config.TeleportType().getAction());
                     Rs2Inventory.waitForInventoryChanges(3000);
+                    state = MntnSlayerState.BANK;
                 } else {
                     state = MntnSlayerState.INITIALIZING;
                 }
@@ -642,14 +637,17 @@ public class MntnSlayerPlugin extends Plugin {
         Microbot.log("Handling custom walking path for: " + currentTask.getMonster());
 
         if(currentTask == MntnSlayerMonster.CAVE_BUG || currentTask == MntnSlayerMonster.CAVE_SLIME){
-            Rs2Walker.walkTo(new WorldPoint(3171, 3170, 0), 2);
-            if(Rs2GameObject.interact(5947, "Climb-down")){
-                Rs2Random.wait(1500, 3000);
-                if(Rs2Walker.walkTo(currentTaskLocation, 2)){
-                    state = MntnSlayerState.FIGHTING;
-                }
+            if(Rs2Walker.walkTo(new WorldPoint(3171, 3170, 0), 2)){
+                Rs2Random.wait(3000, 5000);
+                if(Rs2GameObject.interact(5947, "Climb-down")){
+                    Rs2Random.wait(5500, 8000);
+                    if(Rs2Walker.walkTo(currentTaskLocation, 2)){
+                        state = MntnSlayerState.FIGHTING;
+                    }
 
+                }
             }
+
         }
 
         if(currentTask == MntnSlayerMonster.MINOTAUR){
@@ -664,6 +662,7 @@ public class MntnSlayerPlugin extends Plugin {
     }
 
     void getRequiredTaskItems(){
+        requiredTaskItems = new ArrayList<>();
         //TODO
         if(currentTask.getItemsRequired() != null){
             requiredTaskItems.addAll(Arrays.asList(currentTask.getItemsRequired()));
